@@ -1,0 +1,486 @@
+/*
+========================================================================
+   CIMOL BOJOT AA — TEMA DASHBOARD
+   File ini TIDAK mengubah main.css sama sekali.
+   Cukup di-load SETELAH main.css, lalu semua komponen (sidebar, card,
+   tabel, badge, dll) otomatis ikut berubah warna karena semuanya
+   sudah pakai CSS variable di main.css.
+
+   Isi file ini:
+   1. Override variabel warna (hijau -> merah/maroon Cimol Bojot AA)
+   2. Komponen brand/logo sidebar yang mudah diganti
+   3. Komponen baru khusus dashboard (greeting navbar, icon stat card,
+      badge stok menipis/habis, link "lihat semua")
+========================================================================
+*/
+
+/* ---------------------------------------------------------------------
+   1. Override Palet Warna
+--------------------------------------------------------------------- */
+:root {
+    --bs-body-bg: #FBF3EF; /* latar halaman: krem hangat, senada foto */
+
+    --brand-forest-dark: #5C1212;      /* sidebar + elemen paling gelap */
+    --brand-forest-medium: #8C1F1F;    /* merah utama: tombol, kartu Omzet, ikon */
+    --brand-forest-light: #B23A3A;     /* merah lebih terang untuk hover */
+    --brand-lime: #FFD166;             /* aksen emas (pengganti lime), dipakai kecil2 */
+    --brand-lime-hover: #ffdb85;
+    --brand-lime-translucent: rgba(255, 209, 102, 0.18);
+
+    --text-main: #2B1414;
+    --text-muted-green: #8C7370;       /* nama variabel lama, isinya abu kemerahan */
+    --text-sidebar-muted: rgba(255, 255, 255, 0.68);
+
+    --border-light: #F1E1DA;
+    --border-dark-green: rgba(255, 255, 255, 0.12);
+
+    /* Warna khusus badge stok */
+    --stock-menipis-bg: #FBDCDC;
+    --stock-menipis-text: #A5222A;
+    --stock-habis-bg: #E9E4E2;
+    --stock-habis-text: #6B6260;
+}
+
+/* Latar promo banner tetap butuh override manual karena di main.css
+   warnanya ditulis langsung (bukan variabel) */
+.promo-banner-card {
+    background-color: #FBE3D8;
+}
+
+/* Hover bar chart ApexCharts, menyesuaikan warna baru */
+.apexcharts-bar-area[fill="#8C1F1F"]:hover,
+.apexcharts-bar-area[fill="#8c1f1f"]:hover {
+    fill: #A5292F !important;
+}
+
+/* ---------------------------------------------------------------------
+   2. Logo Brand Sidebar — mudah diganti, tidak menyatu dengan desain
+   ---------------------------------------------------------------------
+   Cara ganti logo: tinggal timpa file
+   public/assets_dashboard/images/logo.png dengan logo toko kamu
+   (disarankan rasio 1:1, misalnya 200x200px). Tidak perlu ubah kode
+   apa pun. Kalau file logo belum ada / gagal dimuat, sistem otomatis
+   menampilkan inisial sebagai pengganti sementara, jadi sidebar tidak
+   pernah tampil ikon gambar rusak.
+--------------------------------------------------------------------- */
+.sidebar-brand {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.sidebar-brand-logo {
+    --sidebar-logo-size: 84px;
+    width: var(--sidebar-logo-size);
+    height: var(--sidebar-logo-size);
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FFFFFF;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sidebar-brand-logo-fallback {
+    display: none;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    color: var(--brand-forest-dark);
+    background-color: var(--brand-lime);
+}
+
+/* Kelas ini ditambahkan otomatis lewat JS kecil (onerror) saat logo.png
+   tidak ditemukan / gagal dimuat */
+.sidebar-brand-logo.logo-fallback .sidebar-brand-logo-fallback {
+    display: flex;
+}
+
+.sidebar-brand-text {
+    line-height: 1.25;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* ---------------------------------------------------------------------
+   3. Navbar — Blok Sapaan (pengganti dropdown "Aksi Cepat")
+--------------------------------------------------------------------- */
+.navbar-greeting {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.navbar-greeting-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-lg);
+    background-color: var(--brand-forest-medium);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+.navbar-greeting-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 0.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.navbar-greeting-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted-green);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---------------------------------------------------------------------
+   4. Kartu Statistik dengan Ikon (Jumlah Transaksi / Total Menu / Stok)
+--------------------------------------------------------------------- */
+.stat-icon-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.stat-icon-row .stat-label {
+    margin-bottom: 0;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.stat-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    background-color: var(--stock-menipis-bg);
+    color: var(--brand-forest-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.stat-note {
+    font-size: 0.8rem;
+    color: var(--text-muted-green);
+    margin-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------
+   5. Badge Status Stok (Menipis / Habis)
+--------------------------------------------------------------------- */
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 50rem;
+}
+
+.stock-badge.menipis {
+    background-color: var(--stock-menipis-bg);
+    color: var(--stock-menipis-text);
+}
+
+.stock-badge.habis {
+    background-color: var(--stock-habis-bg);
+    color: var(--stock-habis-text);
+}
+
+/* ---------------------------------------------------------------------
+   6. Link kecil "Lihat Semua" (dipakai di header kartu/tabel)
+--------------------------------------------------------------------- */
+.link-inline {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--brand-forest-medium);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+}
+
+.link-inline:hover {
+    color: var(--brand-forest-dark);
+}
+
+.link-inline i {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.link-inline:hover i {
+    transform: translateX(3px);
+}
+
+/* ---------------------------------------------------------------------
+   7. Tombol "Lihat Detail" di atas kartu gelap (Omzet Hari Ini)
+--------------------------------------------------------------------- */
+.alert-green-card .btn-custom-light {
+    align-self: flex-start;
+}
+
+/* =====================================================================
+   4. POLISH TAMPILAN (ditambahkan) — modal, form, foto, profil, dll.
+   Semua di-scope ke kelas baru / komponen yang sudah ada, tanpa
+   mengubah main.css.
+===================================================================== */
+
+/* ---- Modal lebih rapi ---- */
+.modal-content {
+    border: 0;
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(60, 12, 12, 0.28);
+    overflow: hidden;
+}
+.modal-backdrop.show { opacity: 0.45; }
+.modal-header {
+    border-bottom: 1px solid var(--border-light);
+    padding: 1.1rem 1.5rem;
+    gap: 0.85rem;
+    align-items: center;
+}
+.modal-header .btn-close { margin-left: auto; }
+.modal-title { font-weight: 800; color: var(--text-main); font-size: 1.05rem; }
+.modal-body { padding: 1.4rem 1.5rem; }
+.modal-footer {
+    border-top: 1px solid var(--border-light);
+    padding: 1rem 1.5rem;
+    background: #FFFAF7;
+    gap: 0.5rem;
+}
+.modal-header-brand {
+    background: linear-gradient(135deg, #FFF3EC 0%, #FBE3D8 100%);
+}
+.modal-header-icon {
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--brand-forest-medium);
+    color: #fff; font-size: 1.15rem;
+    box-shadow: 0 6px 14px rgba(140, 31, 31, 0.28);
+}
+.modal-header-avatar {
+    width: 48px; height: 48px; flex-shrink: 0;
+    border-radius: 50%; object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 10px rgba(60, 12, 12, 0.18);
+}
+.modal-subtitle { display: block; color: var(--text-muted-green); font-size: 0.78rem; }
+
+/* ---- Form: fokus & label lebih jelas ---- */
+.form-label-custom { font-weight: 700; letter-spacing: 0.01em; }
+.form-control-custom:focus,
+.form-select-custom:focus {
+    border-color: var(--brand-forest-light);
+    box-shadow: 0 0 0 4px rgba(178, 58, 58, 0.14);
+}
+textarea.form-control-custom { resize: vertical; min-height: 84px; }
+
+.input-prefix { display: flex; align-items: stretch; }
+.input-prefix-text {
+    display: flex; align-items: center;
+    padding: 0 0.85rem;
+    background: #FBE3D8; color: var(--brand-forest-medium);
+    font-weight: 800; font-size: 0.85rem;
+    border: 1px solid var(--border-light); border-right: 0;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+.input-prefix .form-control-custom { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+
+/* ---- Thumbnail foto kecil (bumbu/topping/menu) ---- */
+.thumb-box {
+    --thumb-size: 44px;
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: var(--thumb-size); height: var(--thumb-size);
+    flex-shrink: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #FBE3D8, #F6CFC0);
+    color: var(--brand-forest-light);
+    border: 1px solid var(--border-light);
+}
+.thumb-box-icon { font-size: calc(var(--thumb-size) * 0.42); opacity: 0.85; }
+.thumb-box-img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+}
+
+/* ---- Preview pilihan barang di modal Tambah Stok ---- */
+.pilihan-preview {
+    display: flex; align-items: center; gap: 0.85rem;
+    margin-top: 0.75rem; padding: 0.7rem 0.9rem;
+    border: 1px dashed #E5B9AC; border-radius: 14px;
+    background: #FFF7F3;
+}
+.pilihan-preview.d-none { display: none !important; }
+.pilihan-preview-nama { font-weight: 800; color: var(--text-main); }
+.pilihan-preview-sub { font-size: 0.78rem; color: var(--text-muted-green); }
+
+/* ---- Badge jenis bumbu / topping ---- */
+.badge-jenis {
+    display: inline-block; padding: 0.22rem 0.7rem;
+    border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+}
+.badge-jenis.jenis-bumbu { background: #FBE3D8; color: #8C1F1F; }
+.badge-jenis.jenis-topping { background: #FFF1CC; color: #8A6100; }
+
+/* ---- Komponen upload foto ---- */
+.foto-upload { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.foto-upload-preview {
+    position: relative; width: 92px; height: 92px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #FBE3D8, #F6CFC0);
+    color: var(--brand-forest-light);
+    border: 2px dashed #E0A99B;
+    overflow: hidden;
+}
+.foto-upload-preview.shape-circle { border-radius: 50%; }
+.foto-upload-preview.shape-square { border-radius: 18px; }
+.foto-upload-placeholder { font-size: 2rem; opacity: 0.8; }
+.foto-upload-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: none;
+}
+.foto-upload.has-img .foto-upload-img { display: block; }
+.foto-upload.has-img .foto-upload-preview { border-style: solid; border-color: #fff; box-shadow: 0 6px 16px rgba(60, 12, 12, 0.18); }
+.foto-upload-body { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+.foto-upload-hint { font-size: 0.76rem; color: var(--text-muted-green); }
+.foto-upload-hapus {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.8rem; color: #A5222A; cursor: pointer; margin: 0;
+}
+
+/* ---- Pilihan jenis kelamin (kartu radio) ---- */
+.radio-cards { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.radio-card { cursor: pointer; margin: 0; }
+.radio-card input { position: absolute; opacity: 0; pointer-events: none; }
+.radio-card-body {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border: 1.5px solid var(--border-light); border-radius: 12px;
+    background: #fff; font-weight: 600; color: var(--text-main);
+    transition: all 0.15s ease;
+}
+.radio-card:hover .radio-card-body { border-color: var(--brand-forest-light); }
+.radio-card input:checked + .radio-card-body {
+    border-color: var(--brand-forest-medium);
+    background: #FBE3D8; color: var(--brand-forest-medium);
+    box-shadow: 0 0 0 3px rgba(140, 31, 31, 0.12);
+}
+.radio-card input:focus-visible + .radio-card-body { outline: 2px solid var(--brand-forest-light); outline-offset: 2px; }
+
+/* ---- Halaman Profil ---- */
+.profile-hero {
+    background: #fff; border-radius: 22px; overflow: hidden;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 10px 30px rgba(92, 18, 18, 0.07);
+}
+.profile-hero-cover {
+    height: 118px;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(255, 209, 102, 0.35), transparent 40%),
+        linear-gradient(120deg, #5C1212 0%, #8C1F1F 55%, #B23A3A 100%);
+}
+.profile-hero-body {
+    display: flex; align-items: flex-end; gap: 1.25rem; flex-wrap: wrap;
+    padding: 0 1.75rem 1.4rem; margin-top: -48px;
+}
+.profile-hero-avatar {
+    width: 112px; height: 112px; border-radius: 50%; object-fit: cover;
+    border: 5px solid #fff; background: #fff;
+    box-shadow: 0 8px 22px rgba(60, 12, 12, 0.25);
+}
+.profile-hero-info { flex: 1 1 260px; padding-bottom: 0.25rem; min-width: 0; }
+.profile-hero-name { font-size: 1.4rem; font-weight: 800; margin: 0 0 0.35rem; color: var(--text-main); }
+.profile-hero-meta {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.1rem;
+    color: var(--text-muted-green); font-size: 0.86rem;
+}
+.profile-hero-meta i { margin-right: 0.3rem; }
+.profile-role-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.25rem 0.8rem; border-radius: 999px;
+    font-size: 0.78rem; font-weight: 800;
+}
+.profile-role-badge.role-admin { background: #FBE3D8; color: #8C1F1F; }
+.profile-role-badge.role-kasir { background: #FFF1CC; color: #8A6100; }
+.profile-hero-stats { display: flex; gap: 0.75rem; padding-bottom: 0.25rem; }
+.profile-stat {
+    min-width: 96px; text-align: center;
+    padding: 0.6rem 1rem; border-radius: 14px;
+    background: #FFF7F3; border: 1px solid var(--border-light);
+}
+.profile-stat-value { display: block; font-weight: 800; font-size: 1.1rem; color: var(--brand-forest-medium); }
+.profile-stat-label { font-size: 0.72rem; color: var(--text-muted-green); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.info-list > div {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: 0.6rem 0; border-bottom: 1px dashed var(--border-light);
+}
+.info-list > div:last-child { border-bottom: 0; }
+.info-list dt { font-weight: 600; color: var(--text-muted-green); font-size: 0.85rem; margin: 0; }
+.info-list dd { font-weight: 700; color: var(--text-main); margin: 0; text-align: right; }
+
+.danger-zone { border: 1px solid #F3C9C9; background: #FFF9F9; }
+
+/* ---- Notifikasi navbar ---- */
+.notif-count-pill {
+    min-width: 26px; padding: 0.1rem 0.55rem; text-align: center;
+    border-radius: 999px; background: var(--brand-forest-medium);
+    color: #fff; font-size: 0.75rem; font-weight: 800;
+}
+.notification-empty {
+    display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    padding: 1.6rem 1rem; text-align: center;
+    color: var(--text-muted-green); font-size: 0.85rem;
+}
+.notification-empty i { font-size: 1.8rem; color: #2F8F5B; }
+.navbar-search-input.search-not-found { box-shadow: 0 0 0 3px rgba(165, 34, 42, 0.25); }
+
+/* ---- Kartu & tabel: sentuhan halus ---- */
+.table-card-custom { border-radius: 20px; }
+.table-custom tbody tr { transition: background-color 0.15s ease; }
+.table-custom tbody tr:hover { background-color: #FFF7F3; }
+.alert { border-radius: 14px; border: 0; font-weight: 600; }
+.card-stat { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.card-stat:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(92, 18, 18, 0.1); }
+
+@media (max-width: 575.98px) {
+    .profile-hero-body { padding: 0 1.1rem 1.2rem; }
+    .profile-hero-avatar { width: 96px; height: 96px; }
+    .modal-body, .modal-header, .modal-footer { padding-left: 1.1rem; padding-right: 1.1rem; }
+}

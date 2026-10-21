@@ -1,0 +1,125 @@
+/* ==========================================================
+   Bahan Operasional (minyak goreng, gas)
+   Dipakai di: Master Bahan Operasional (admin), tab Bahan
+   Operasional di Manajemen Stok (admin) dan Cek Stok (kasir).
+   Hanya komponen baru (prefix bo-), tidak mengubah CSS lain.
+   ========================================================== */
+:root {
+  --bo-red: #8C1F1F;
+  --bo-ink: #2B1414;
+  --bo-muted: #8C7370;
+  --bo-line: #F1E1DA;
+  --bo-ok: #1E8E5A;   --bo-ok-bg: #DDF5E8;
+  --bo-warn: #B7791F; --bo-warn-bg: #FFF1CC;
+  --bo-bad: #B42323;  --bo-bad-bg: #FBDCDC;
+}
+
+.bo-ikon {
+  width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 1.1rem;
+  background: #FBE3D8; color: var(--bo-red);
+}
+
+.bo-info {
+  display: flex; gap: .85rem; align-items: flex-start;
+  margin: 1rem 1.25rem 0; padding: .9rem 1.1rem;
+  background: #FFF8F4; border: 1px solid var(--bo-line); border-radius: 16px;
+  color: var(--bo-ink); font-size: .86rem;
+}
+.bo-info > i { color: var(--bo-red); font-size: 1.15rem; margin-top: .1rem; }
+.bo-info b { display: block; margin-bottom: .15rem; }
+.bo-info p { margin: 0; color: var(--bo-muted); line-height: 1.5; }
+
+/* ---------- Kartu bahan (kasir & admin) ---------- */
+.bo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.1rem; padding: 1.1rem; }
+
+.bo-card {
+  display: flex; flex-direction: column; gap: .9rem;
+  background: #fff; border: 1px solid var(--bo-line); border-radius: 20px;
+  padding: 1.15rem; box-shadow: 0 1px 2px rgba(60,12,12,.04), 0 8px 24px rgba(60,12,12,.06);
+  border-top: 5px solid var(--bo-ok);
+}
+.bo-card.st-menipis   { border-top-color: #E0A100; }
+.bo-card.st-perlu_cek { border-top-color: #E08A00; }
+.bo-card.st-habis     { border-top-color: var(--bo-bad); }
+.bo-card.st-belum_dikelola { border-top-color: #CFC4C1; }
+
+.bo-card-top { display: flex; align-items: center; gap: .8rem; }
+.bo-card-top .bo-ikon { width: 46px; height: 46px; font-size: 1.3rem; }
+.bo-nama { margin: 0; font-weight: 800; font-size: 1.05rem; color: var(--bo-ink); }
+.bo-sub { font-size: .78rem; color: var(--bo-muted); }
+
+.bo-pill {
+  margin-left: auto; display: inline-flex; align-items: center; gap: .35rem;
+  border-radius: 999px; padding: .22rem .7rem; font-size: .74rem; font-weight: 700; white-space: nowrap;
+}
+.bo-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.bo-pill.aman { background: var(--bo-ok-bg); color: var(--bo-ok); }
+.bo-pill.menipis, .bo-pill.perlu_cek { background: var(--bo-warn-bg); color: var(--bo-warn); }
+.bo-pill.habis { background: var(--bo-bad-bg); color: var(--bo-bad); }
+.bo-pill.belum_dikelola { background: #EFEAE8; color: #6B6260; }
+
+.bo-meter-label { display: flex; justify-content: space-between; font-size: .8rem; color: var(--bo-muted); margin-bottom: .35rem; }
+.bo-meter-label b { color: var(--bo-ink); }
+.bo-meter { height: 12px; border-radius: 999px; background: #F4EAE6; overflow: hidden; }
+.bo-meter > i { display: block; height: 100%; border-radius: 999px; background: var(--bo-ok); transition: width .4s ease; }
+.bo-card.st-menipis .bo-meter > i { background: #E0A100; }
+.bo-card.st-perlu_cek .bo-meter > i, .bo-card.st-habis .bo-meter > i { background: var(--bo-bad); }
+
+.bo-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.bo-tile { background: #FFF8F4; border: 1px solid var(--bo-line); border-radius: 14px; padding: .6rem .75rem; }
+.bo-tile span { display: block; font-size: .72rem; color: var(--bo-muted); font-weight: 600; }
+.bo-tile b { font-size: 1.05rem; color: var(--bo-ink); }
+
+.bo-alert {
+  display: flex; gap: .6rem; align-items: flex-start;
+  border-radius: 14px; padding: .7rem .85rem; font-size: .82rem; line-height: 1.4;
+}
+.bo-alert i { margin-top: .1rem; }
+.bo-alert.warn { background: var(--bo-warn-bg); color: #7A5410; }
+.bo-alert.bad  { background: var(--bo-bad-bg); color: #8A1B1B; }
+
+.bo-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: auto; }
+.bo-actions form { flex: 1 1 auto; display: flex; }
+.bo-btn {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  border: 0; border-radius: 12px; padding: .65rem 1rem; font-weight: 700; font-size: .88rem;
+  background: var(--bo-red); color: #fff; cursor: pointer; transition: transform .12s, background .15s;
+}
+.bo-btn:hover { background: #B23A3A; transform: translateY(-1px); }
+.bo-btn.ghost { background: #fff; color: var(--bo-red); border: 1.5px solid var(--bo-line); }
+.bo-btn.ghost:hover { background: #FFF8F4; border-color: var(--bo-red); }
+.bo-btn.danger { background: var(--bo-bad); }
+.bo-btn.danger:hover { background: #8F1C1C; }
+
+.bo-empty { grid-column: 1 / -1; text-align: center; padding: 2.2rem 1rem; color: var(--bo-muted); }
+.bo-empty i { display: block; font-size: 2rem; margin-bottom: .4rem; }
+
+/* Banner peringatan di atas tab (kasir) */
+.bo-banner {
+  display: flex; align-items: center; gap: .8rem; margin: 1rem 1.1rem 0; padding: .85rem 1.1rem;
+  border-radius: 16px; background: var(--bo-warn-bg); color: #7A5410; font-weight: 600; font-size: .88rem;
+}
+.bo-banner i { font-size: 1.2rem; }
+
+/* ---------- Alur otomatis (sesi goreng) ---------- */
+.bo-alert.ok { background: var(--bo-ok-bg); color: #14633F; }
+.qty-chips button.active { background: var(--bo-red) !important; color: #fff !important; border-color: var(--bo-red) !important; }
+
+/* ---------- Upload foto bahan (form tambah/edit) ---------- */
+.bo-opsional { font-weight: 500; color: var(--bo-muted); font-size: .78rem; }
+.bo-foto { display: flex; align-items: center; gap: 1rem; padding: .85rem; background: #FFF8F4; border: 1.5px dashed #E8CFC4; border-radius: 16px; }
+.bo-foto-preview {
+  width: 84px; height: 84px; border-radius: 18px; flex-shrink: 0; overflow: hidden; position: relative;
+  display: grid; place-items: center; background: #FBE3D8; color: var(--bo-red); font-size: 1.8rem;
+}
+.bo-foto-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bo-foto-aksi { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; min-width: 0; }
+.bo-foto-hapus { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-size: .82rem; font-weight: 600; color: var(--bo-bad); cursor: pointer; }
+.bo-foto-hapus input { accent-color: var(--bo-bad); }
+
+/* ---------- Kartu bahan di Cek Stok kasir bisa diklik ---------- */
+.bo-card.bo-klik { cursor: pointer; transition: transform .15s, box-shadow .15s; }
+.bo-card.bo-klik:hover { transform: translateY(-3px); box-shadow: 0 2px 4px rgba(60,12,12,.05), 0 14px 30px rgba(60,12,12,.12); }
+.bo-card.bo-klik:focus-visible { outline: 3px solid rgba(140,31,31,.35); outline-offset: 2px; }
+.bo-lihat { display: inline-flex; align-items: center; gap: .3rem; font-size: .76rem; font-weight: 700; color: var(--bo-red); margin-top: auto; }

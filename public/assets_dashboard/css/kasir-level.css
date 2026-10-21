@@ -1,0 +1,186 @@
+/* ==========================================================================
+   LEVEL PEDAS — pilihan level 1–3 di modal menu kasir
+   Kartu bergradasi api: makin tinggi level, makin panas warnanya, makin
+   banyak api, dan makin "heboh" animasinya (level 3 berdenyut + api menari).
+   ========================================================================== */
+
+.pos-modal .lv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .65rem;
+}
+
+.pos-modal .lv-card {
+  --lv-a: #E9DFDA;
+  --lv-b: #F6EFEC;
+  --lv-ink: #7B6763;
+  --lv-glow: rgba(140, 31, 31, 0);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 2px solid #F1E1DA;
+  border-radius: 18px;
+  padding: .85rem .4rem .7rem;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .3rem;
+  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s ease, border-color .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* lapisan gradasi di belakang isi kartu */
+.pos-modal .lv-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(160deg, var(--lv-a), var(--lv-b));
+  opacity: .35;
+  transition: opacity .25s ease;
+}
+
+/* kilau yang menyapu saat kartu di-hover */
+.pos-modal .lv-card::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -80%;
+  width: 55%;
+  height: 200%;
+  z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent);
+  transform: rotate(12deg);
+  transition: left .6s ease;
+}
+.pos-modal .lv-card:hover::after { left: 130%; }
+.pos-modal .lv-card:hover { transform: translateY(-4px) scale(1.03); }
+.pos-modal .lv-card:active { transform: scale(.97); }
+
+.pos-modal .lv-card.lv-0 { --lv-a: #D9CEC9; --lv-b: #F6EFEC; --lv-ink: #7B6763; }
+.pos-modal .lv-card.lv-1 { --lv-a: #FFD166; --lv-b: #FFB347; --lv-ink: #9A5B00; --lv-glow: rgba(255, 179, 71, .55); }
+.pos-modal .lv-card.lv-2 { --lv-a: #FF8A3D; --lv-b: #F0481F; --lv-ink: #B4300D; --lv-glow: rgba(240, 72, 31, .55); }
+.pos-modal .lv-card.lv-3 { --lv-a: #E3262E; --lv-b: #5C0A12; --lv-ink: #fff;    --lv-glow: rgba(227, 38, 46, .7); }
+
+.pos-modal .lv-icon {
+  font-size: 1.55rem;
+  line-height: 1;
+  height: 1.7rem;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1px;
+  color: var(--lv-ink);
+}
+.pos-modal .lv-icon .bi { display: inline-block; transform-origin: 50% 90%; }
+.pos-modal .lv-card.lv-1 .lv-icon .bi { font-size: 1.3rem; }
+.pos-modal .lv-card.lv-2 .lv-icon .bi { font-size: 1.15rem; }
+.pos-modal .lv-card.lv-3 .lv-icon .bi { font-size: 1.05rem; }
+
+.pos-modal .lv-name  { font-weight: 800; font-size: .86rem; color: #2B1414; line-height: 1.1; }
+.pos-modal .lv-sub   { font-size: .66rem; font-weight: 700; color: var(--lv-ink); letter-spacing: .02em; text-transform: uppercase; }
+.pos-modal .lv-card.lv-3 .lv-name,
+.pos-modal .lv-card.selected.lv-2 .lv-name { color: #fff; }
+.pos-modal .lv-card.lv-3 .lv-sub { color: #FFD1D1; }
+.pos-modal .lv-card.lv-3::before { opacity: .92; }
+.pos-modal .lv-card.lv-3 .lv-icon { color: #FFD166; filter: drop-shadow(0 0 6px rgba(255, 140, 0, .9)); }
+
+/* meter panas kecil di bawah kartu */
+.pos-modal .lv-meter { display: flex; gap: 3px; margin-top: .15rem; }
+.pos-modal .lv-meter i {
+  width: 14px; height: 5px; border-radius: 99px;
+  background: rgba(0, 0, 0, .12);
+  transition: background .25s ease, box-shadow .25s ease;
+}
+.pos-modal .lv-card.lv-3 .lv-meter i { background: rgba(255, 255, 255, .22); }
+.pos-modal .lv-card.lv-1 .lv-meter i:nth-child(-n+1),
+.pos-modal .lv-card.lv-2 .lv-meter i:nth-child(-n+2),
+.pos-modal .lv-card.lv-3 .lv-meter i:nth-child(-n+3) { background: var(--lv-ink); }
+.pos-modal .lv-card.lv-3 .lv-meter i:nth-child(-n+3) { background: #FFD166; box-shadow: 0 0 6px #FFB347; }
+
+/* tanda centang */
+.pos-modal .lv-check {
+  position: absolute; top: 7px; right: 7px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; border: 2px solid #E6D6CF; color: transparent;
+  display: flex; align-items: center; justify-content: center; font-size: .7rem;
+  transform: scale(.8);
+  transition: all .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* ---- STATE TERPILIH ---- */
+.pos-modal .lv-card.selected {
+  border-color: var(--lv-b);
+  box-shadow: 0 0 0 4px var(--lv-glow), 0 12px 26px -8px var(--lv-glow);
+  transform: translateY(-3px) scale(1.04);
+}
+.pos-modal .lv-card.selected::before { opacity: 1; }
+.pos-modal .lv-card.selected.lv-0 { border-color: #8C1F1F; box-shadow: 0 0 0 3px rgba(140, 31, 31, .14); }
+.pos-modal .lv-card.selected.lv-0::before { opacity: .6; }
+.pos-modal .lv-card.selected.lv-1 .lv-name { color: #5C3500; }
+.pos-modal .lv-card.selected.lv-2 .lv-icon,
+.pos-modal .lv-card.selected.lv-2 .lv-sub { color: #FFF3D6; }
+.pos-modal .lv-card.selected.lv-2 .lv-meter i:nth-child(-n+2) { background: #fff; }
+.pos-modal .lv-card.selected .lv-check { background: #fff; border-color: #fff; color: var(--lv-b); transform: scale(1); }
+.pos-modal .lv-card.selected.lv-0 .lv-check { background: #8C1F1F; border-color: #8C1F1F; color: #fff; }
+
+/* ---- ANIMASI API ---- */
+@keyframes lvFlicker {
+  0%, 100% { transform: scale(1) rotate(-3deg); }
+  50%      { transform: scale(1.14, 1.22) rotate(3deg); }
+}
+@keyframes lvDance {
+  0%, 100% { transform: scale(1) rotate(-6deg); }
+  25%      { transform: scale(1.18, 1.3) rotate(4deg); }
+  60%      { transform: scale(.94, 1.1) rotate(-4deg); }
+}
+@keyframes lvPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(227, 38, 46, .5), 0 12px 26px -8px rgba(227, 38, 46, .7); }
+  50%      { box-shadow: 0 0 0 9px rgba(227, 38, 46, .12), 0 16px 38px -6px rgba(255, 90, 31, .95); }
+}
+@keyframes lvShake {
+  0%, 100% { transform: translateY(-3px) scale(1.04) rotate(0); }
+  20%      { transform: translateY(-3px) scale(1.06) rotate(-1.2deg); }
+  40%      { transform: translateY(-4px) scale(1.06) rotate(1.2deg); }
+  60%      { transform: translateY(-3px) scale(1.05) rotate(-.8deg); }
+}
+
+.pos-modal .lv-card.lv-1.selected .lv-icon .bi { animation: lvFlicker 1.6s ease-in-out infinite; }
+.pos-modal .lv-card.lv-2.selected .lv-icon .bi { animation: lvFlicker .95s ease-in-out infinite; }
+.pos-modal .lv-card.lv-2.selected .lv-icon .bi:nth-child(2) { animation-delay: .18s; }
+.pos-modal .lv-card.lv-3 .lv-icon .bi { animation: lvDance 1.1s ease-in-out infinite; }
+.pos-modal .lv-card.lv-3 .lv-icon .bi:nth-child(2) { animation-delay: .15s; }
+.pos-modal .lv-card.lv-3 .lv-icon .bi:nth-child(3) { animation-delay: .32s; }
+.pos-modal .lv-card.lv-3.selected { animation: lvPulse 1.4s ease-in-out infinite, lvShake 2.4s ease-in-out infinite; }
+
+/* banner kecil: ringkasan level yang dipilih */
+.pos-modal .lv-banner {
+  margin-top: .75rem;
+  border-radius: 14px;
+  padding: .55rem .85rem;
+  font-size: .78rem;
+  font-weight: 700;
+  display: flex; align-items: center; gap: .55rem;
+  background: #FBF3EF; color: #7B6763;
+  transition: background .3s ease, color .3s ease;
+}
+.pos-modal .lv-banner.b1 { background: linear-gradient(90deg, #FFF1CC, #FFE0A8); color: #8A5300; }
+.pos-modal .lv-banner.b2 { background: linear-gradient(90deg, #FFE0CC, #FFB28A); color: #A12E0A; }
+.pos-modal .lv-banner.b3 { background: linear-gradient(90deg, #5C0A12, #E3262E); color: #fff; }
+
+/* tag level di keranjang */
+.km .pos-tag.pedas { background: #FFE3D3; color: #B4300D; }
+.km .pos-tag.pedas.p1 { background: #FFF1CC; color: #8A5300; }
+.km .pos-tag.pedas.p3 { background: linear-gradient(90deg, #8C1F1F, #E3262E); color: #fff; }
+
+@media (max-width: 575.98px) {
+  .pos-modal .lv-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pos-modal .lv-card,
+  .pos-modal .lv-card .lv-icon .bi { animation: none !important; transition: none !important; }
+}

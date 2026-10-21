@@ -1,0 +1,148 @@
+/*
+========================================================================
+   CIMOL BOJOT AA — POLISH KHUSUS KASIR (file BARU)
+   Dimuat SETELAH kasir-modern.css & cimol-plus.css di halaman kasir
+   (Beranda, Transaksi/POS, Cek Stok). Semua selector di bawah .km.
+========================================================================
+*/
+
+/* ---------- Hero halaman (Transaksi & Cek Stok) ---------- */
+.km .kp-hero { margin-bottom: 1.4rem; }
+.km .kp-hero-steps { display: flex; flex-wrap: wrap; gap: .55rem; }
+.km .kp-hero-steps span {
+  display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .95rem .45rem .5rem; border-radius: 999px;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.24); backdrop-filter: blur(6px);
+  color: #fff; font-size: .82rem; font-weight: 700;
+}
+.km .kp-hero-steps b {
+  min-width: 26px; height: 26px; padding: 0 .4rem; border-radius: 999px; display: grid; place-items: center;
+  background: var(--pl-gold, #FFD166); color: #5C1212; font-size: .8rem; font-weight: 800;
+}
+
+/* ---------- Beranda: hero lebih hidup ---------- */
+.km .db-hero { border-radius: 30px; box-shadow: 0 22px 46px rgba(92,18,18,.3); }
+.km .db-hero::after {
+  content: ""; position: absolute; right: -70px; bottom: -90px; width: 280px; height: 280px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,209,102,.38), transparent 65%); pointer-events: none;
+}
+.km .db-hero-in { z-index: 1; }
+.km .db-date {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .8rem; border-radius: 999px;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); opacity: 1;
+}
+.km .db-clock {
+  padding: 1rem 1.3rem; border-radius: 24px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(8px);
+}
+.km .km-btn-gold, .km .km-btn.km-btn-gold { box-shadow: 0 10px 22px rgba(0,0,0,.25); transition: transform .15s, box-shadow .15s; }
+.km .km-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(0,0,0,.3); }
+
+/* ---------- Kartu umum ---------- */
+.km .km-card { border-radius: 24px; transition: box-shadow .2s, transform .2s; }
+.km .km-card-title { font-size: 1.02rem; }
+.km .km-card-title i {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 11px;
+  background: var(--km-red-soft); color: var(--km-red); font-size: 1rem;
+}
+
+/* Statistik beranda */
+.km .db-stat { border-radius: 24px; transition: transform .18s, box-shadow .18s; }
+.km .db-stat:hover { transform: translateY(-4px); box-shadow: var(--km-shadow-hover); }
+.km .db-stat.is-primary { position: relative; overflow: hidden; }
+.km .db-stat.is-primary::after {
+  content: ""; position: absolute; right: -30px; bottom: -40px; width: 130px; height: 130px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,209,102,.4), transparent 65%);
+}
+.km .db-stat-ico { border-radius: 14px; }
+
+/* Grafik batang */
+.km .db-bar-fill { border-radius: 12px 12px 6px 6px; transition: filter .15s, transform .15s; }
+.km .db-bar:hover .db-bar-fill { filter: brightness(1.08); transform: scaleX(1.05); }
+.km .db-bar.is-today .db-bar-fill { box-shadow: 0 8px 18px rgba(140,31,31,.35); }
+
+/* Daftar (terlaris, alert, transaksi terakhir) */
+.km .db-rank { border-radius: 14px; padding: .55rem .5rem; transition: background .15s; }
+.km .db-rank:hover { background: var(--km-cream); }
+.km .db-rank:nth-child(2) .db-rank-no { background: var(--km-gold); color: var(--km-red-dark); }
+.km .db-alert { border-radius: 14px; }
+.km .db-trx { border-radius: 16px; transition: background .15s, transform .15s; }
+.km .db-trx:hover { background: var(--km-cream); transform: translateX(3px); }
+
+/* Jalan pintas */
+.km .db-quick { border-radius: 22px; transition: transform .18s, box-shadow .18s, border-color .18s; }
+.km .db-quick:hover { transform: translateY(-4px); box-shadow: var(--km-shadow-hover); border-color: rgba(140,31,31,.35); }
+.km .db-quick-ico { border-radius: 16px; background: linear-gradient(135deg, #B23A3A, #8C1F1F); color: #fff; box-shadow: 0 8px 16px rgba(140,31,31,.28); }
+
+/* ---------- POS: pencarian, chip kategori ---------- */
+.km .km-search input {
+  min-height: 48px; border-radius: 999px; border: 1.5px solid var(--km-line); background: var(--km-cream);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.km .km-search input:focus { border-color: var(--km-red); background: #fff; box-shadow: 0 0 0 4px rgba(140,31,31,.1); outline: 0; }
+.km .km-chip { padding: .5rem 1.05rem; font-weight: 700; transition: all .15s; }
+.km .km-chip.active { box-shadow: 0 6px 14px rgba(140,31,31,.25); }
+
+/* ---------- POS: kartu menu ---------- */
+.km .pos-menu-card { border-radius: 22px; border-width: 1.5px; transition: transform .2s, box-shadow .2s, border-color .2s; }
+.km .pos-menu-card:hover { transform: translateY(-6px); box-shadow: 0 4px 10px rgba(60,12,12,.08), 0 22px 40px rgba(60,12,12,.16); }
+.km .pos-menu-img::after { content: ""; position: absolute; inset: auto 0 0 0; height: 46%; background: linear-gradient(transparent, rgba(43,20,20,.45)); pointer-events: none; }
+.km .pos-menu-img > * { z-index: 2; }
+.km .pos-menu-body { padding: .8rem .95rem 1rem; }
+.km .pos-menu-nama { font-size: .95rem; }
+.km .pos-menu-harga { color: var(--km-red); font-weight: 800; }
+.km .pos-menu-add {
+  transition: transform .18s, background .15s, box-shadow .15s;
+  box-shadow: 0 8px 18px rgba(140,31,31,.4);
+}
+.km .pos-menu-card:hover .pos-menu-add { transform: scale(1.12) rotate(90deg); }
+.km .pos-menu-cat { backdrop-filter: blur(6px); font-weight: 800; }
+
+/* ---------- POS: keranjang ---------- */
+.km .pos-cart { border-radius: 26px; box-shadow: 0 4px 10px rgba(60,12,12,.06), 0 24px 48px rgba(60,12,12,.13); }
+.km .pos-cart-head {
+  color: #fff; border-bottom: 0;
+  background: radial-gradient(100% 200% at 100% 0%, #C24848, transparent 55%), linear-gradient(135deg, #5C1212, #8C1F1F);
+}
+.km .pos-cart-head .km-card-title { color: #fff; }
+.km .pos-cart-head .km-card-title i { background: rgba(255,255,255,.18); color: var(--km-gold); }
+.km .pos-cart-count { background: var(--km-gold); color: var(--km-red-dark); }
+.km .pos-cart-head .pos-cart-clear { color: rgba(255,255,255,.8); }
+.km .pos-cart-head .pos-cart-clear:hover { color: #fff; }
+.km .pos-cart-item { border-radius: 14px; }
+.km .pos-cart-item img { border-radius: 14px; }
+.km .pos-cart-foot { background: linear-gradient(180deg, var(--km-cream), #fff); }
+.km .pos-total {
+  padding: .8rem 1rem; border-radius: 18px; background: #fff; border: 1.5px dashed var(--km-line);
+}
+.km .pos-total span:last-child { font-size: 1.6rem; letter-spacing: -.02em; }
+.km .pos-pay { border-radius: 16px; transition: all .15s; }
+.km .pos-pay:hover { transform: translateY(-2px); }
+.km .pos-pay.active { box-shadow: 0 8px 16px rgba(140,31,31,.18); }
+
+/* Tombol bayar utama */
+.km .pos-cart-foot .km-btn-block, .km .pos-cart-foot button[type="submit"] {
+  min-height: 52px; border-radius: 999px; font-weight: 800; letter-spacing: .01em;
+  box-shadow: 0 10px 22px rgba(140,31,31,.34); transition: transform .15s, box-shadow .15s;
+}
+.km .pos-cart-foot .km-btn-block:hover:not(:disabled), .km .pos-cart-foot button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-2px); box-shadow: 0 14px 28px rgba(140,31,31,.42);
+}
+
+/* ---------- Cek Stok ---------- */
+.km .stok-toolbar { border-radius: 24px 24px 0 0; }
+.km .km-seg { box-shadow: inset 0 0 0 1px rgba(140,31,31,.08); }
+.km .stok-card { border-radius: 22px; transition: transform .18s, box-shadow .18s; }
+.km .stok-card:hover { transform: translateY(-4px); }
+.km .stok-foto { border-radius: 16px; }
+.km .stok-meter { height: 10px; border-radius: 999px; }
+.km .stok-meter i { border-radius: 999px; }
+.km .km-stat { border-radius: 24px; transition: transform .18s, box-shadow .18s; }
+.km .km-stat:hover { transform: translateY(-3px); box-shadow: var(--km-shadow-hover); }
+.km .km-stat-icon { border-radius: 16px; }
+
+/* ---------- Modal pilihan menu (POS) ---------- */
+.pos-modal .modal-content { border-radius: 28px; }
+.pos-modal .modal-footer { box-shadow: 0 -10px 24px rgba(60,12,12,.06); }
+
+@media (max-width: 575.98px) {
+  .km .kp-hero-steps span { font-size: .76rem; }
+}

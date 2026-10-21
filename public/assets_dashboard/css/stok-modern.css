@@ -1,0 +1,159 @@
+/* ==========================================================
+   Manajemen Stok (admin) - tabel modern & rapi
+   Prefix sm- supaya tidak menabrak CSS lain.
+   ========================================================== */
+:root {
+  --sm-red: #8C1F1F;
+  --sm-ink: #2B1414;
+  --sm-muted: #8C7370;
+  --sm-line: #F1E1DA;
+  --sm-soft: #FFF8F4;
+  --sm-ok: #1E8E5A;   --sm-ok-bg: #DDF5E8;
+  --sm-warn: #B7791F; --sm-warn-bg: #FFF1CC;
+  --sm-bad: #B42323;  --sm-bad-bg: #FBDCDC;
+  --sm-neutral: #6B6260; --sm-neutral-bg: #EFEAE8;
+}
+
+/* ---------- Judul bagian ---------- */
+.sm-head {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+  padding: 1.1rem 1.25rem .75rem;
+}
+.sm-head-sub { margin-top: .75rem; }
+.sm-head-title { display: flex; align-items: center; gap: .8rem; }
+.sm-head-title h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--sm-ink); }
+.sm-head-title p { margin: 0; font-size: .8rem; color: var(--sm-muted); }
+.sm-head-ico {
+  width: 40px; height: 40px; border-radius: 13px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 1.1rem;
+  background: #FBE3D8; color: var(--sm-red);
+}
+.sm-head-ico.in { background: var(--sm-ok-bg); color: var(--sm-ok); }
+
+/* ---------- Kartu pembungkus tabel ---------- */
+.sm-card {
+  margin: 0 1.25rem 1.25rem; background: #fff;
+  border: 1px solid var(--sm-line); border-radius: 20px; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(60,12,12,.04), 0 8px 24px rgba(60,12,12,.05);
+}
+
+/* ---------- Tabel ---------- */
+.sm-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .88rem; color: var(--sm-ink); }
+.sm-table thead th {
+  background: var(--sm-soft); color: var(--sm-muted);
+  font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: .85rem 1rem; white-space: nowrap; border-bottom: 1px solid var(--sm-line);
+}
+.sm-table tbody td { padding: .8rem 1rem; vertical-align: middle; border-bottom: 1px solid #F8EEE9; }
+.sm-table tbody tr:last-child td { border-bottom: 0; }
+.sm-table tbody tr { transition: background .15s; }
+.sm-table tbody tr:hover { background: #FFFBF9; }
+.sm-col-no { width: 52px; text-align: center; color: var(--sm-muted); font-weight: 700; }
+.sm-col-act { width: 1%; white-space: nowrap; text-align: right; }
+.sm-table thead .sm-col-act { text-align: right; }
+.sm-row-auto td { background: #FDFAF8; }
+.sm-row-auto:hover td { background: #FBF5F1; }
+
+.sm-muted { color: var(--sm-muted); font-size: .82rem; }
+.sm-note { max-width: 260px; color: #5B4846; font-size: .84rem; }
+.sm-empty { text-align: center; padding: 2.4rem 1rem !important; color: var(--sm-muted); }
+.sm-empty i { display: block; font-size: 1.8rem; margin-bottom: .35rem; opacity: .7; }
+
+/* ---------- Item (foto + nama) ---------- */
+.sm-item { display: flex; align-items: center; gap: .8rem; min-width: 190px; }
+.sm-item > div { min-width: 0; }
+.sm-item b { display: block; font-weight: 700; line-height: 1.25; }
+.sm-item span { display: block; font-size: .76rem; color: var(--sm-muted); margin-top: .1rem; }
+.sm-item-sm { gap: .6rem; min-width: 150px; }
+.sm-item-sm b { font-size: .86rem; }
+
+/* ---------- Stok + meter ---------- */
+.sm-stock { min-width: 150px; }
+.sm-stock-num { font-size: 1.3rem; font-weight: 800; line-height: 1.1; color: var(--sm-ink); }
+.sm-stock-num small { font-size: .74rem; font-weight: 600; color: var(--sm-muted); margin-left: .3rem; }
+.sm-stock-num-sm { font-size: 1.05rem; }
+.sm-meter { height: 8px; border-radius: 999px; background: #F4EAE6; overflow: hidden; margin: .45rem 0 .3rem; }
+.sm-meter > i { display: block; height: 100%; border-radius: 999px; background: var(--sm-ok); transition: width .4s ease; }
+.sm-meter.warn > i { background: #E0A100; }
+.sm-meter.bad > i { background: var(--sm-bad); }
+.sm-meter.neutral > i { background: #CFC4C1; }
+.sm-stock-min { font-size: .72rem; color: var(--sm-muted); }
+
+/* ---------- Pill status ---------- */
+.sm-pill {
+  display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap;
+  border-radius: 999px; padding: .26rem .75rem; font-size: .76rem; font-weight: 700;
+}
+.sm-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.sm-pill.ok { background: var(--sm-ok-bg); color: var(--sm-ok); }
+.sm-pill.warn { background: var(--sm-warn-bg); color: var(--sm-warn); }
+.sm-pill.bad { background: var(--sm-bad-bg); color: var(--sm-bad); }
+.sm-pill.neutral { background: var(--sm-neutral-bg); color: var(--sm-neutral); }
+
+/* ---------- Tag kecil ---------- */
+.sm-tag {
+  display: inline-block; font-style: normal; font-size: .7rem; font-weight: 700;
+  border-radius: 8px; padding: .12rem .5rem; background: var(--sm-neutral-bg); color: var(--sm-neutral);
+}
+.sm-tag.bumbu { background: #FBE3D8; color: var(--sm-red); }
+.sm-tag.topping { background: #E6F0FF; color: #2456A6; }
+.sm-tag.auto { background: #E6F0FF; color: #2456A6; }
+.sm-tag.off { background: var(--sm-neutral-bg); color: var(--sm-neutral); }
+
+/* ---------- Stok masuk terakhir ---------- */
+.sm-last b { display: block; font-weight: 700; font-size: .86rem; }
+.sm-last .sm-in { font-size: .76rem; font-weight: 700; color: var(--sm-ok); }
+
+/* ---------- Tanggal ---------- */
+.sm-date { display: inline-flex; flex-direction: column; align-items: center; min-width: 52px; padding: .35rem .5rem; background: var(--sm-soft); border: 1px solid var(--sm-line); border-radius: 12px; line-height: 1.1; }
+.sm-date b { font-size: 1.05rem; font-weight: 800; }
+.sm-date span { font-size: .68rem; font-weight: 700; color: var(--sm-muted); text-transform: uppercase; }
+
+/* ---------- Arah stok (masuk / keluar) ---------- */
+.sm-flow { display: flex; align-items: center; gap: .6rem; white-space: nowrap; }
+.sm-flow-ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-size: 1rem; flex-shrink: 0; }
+.sm-flow b { display: block; font-size: .92rem; font-weight: 800; line-height: 1.15; }
+.sm-flow small { display: block; font-size: .72rem; color: var(--sm-muted); }
+.sm-flow.in .sm-flow-ico { background: var(--sm-ok-bg); color: var(--sm-ok); }
+.sm-flow.in b { color: var(--sm-ok); }
+.sm-flow.out .sm-flow-ico { background: var(--sm-bad-bg); color: var(--sm-bad); }
+.sm-flow.out b { color: var(--sm-bad); }
+
+/* ---------- Pengguna ---------- */
+.sm-user { display: inline-flex; align-items: center; gap: .5rem; font-size: .84rem; white-space: nowrap; }
+.sm-av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .72rem; font-weight: 800; background: #FBE3D8; color: var(--sm-red); }
+
+/* ---------- Tombol ikon ---------- */
+.sm-actions { display: inline-flex; gap: .4rem; justify-content: flex-end; }
+.sm-actions form { margin: 0; display: inline-flex; }
+.sm-icon-btn {
+  width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--sm-line); background: #fff;
+  display: inline-grid; place-items: center; font-size: .85rem; color: var(--sm-red); cursor: pointer;
+  transition: background .15s, border-color .15s, transform .12s;
+}
+.sm-icon-btn:hover { background: var(--sm-soft); border-color: var(--sm-red); transform: translateY(-1px); }
+.sm-icon-btn.danger { color: var(--sm-bad); }
+.sm-icon-btn.danger:hover { background: var(--sm-bad-bg); border-color: var(--sm-bad); }
+
+/* ---------- Filter segmen (Semua / Masuk / Keluar) ---------- */
+.sm-seg { display: inline-flex; padding: 4px; background: #F6ECE7; border-radius: 12px; gap: 2px; }
+.sm-seg a {
+  padding: .4rem .95rem; border-radius: 9px; font-size: .8rem; font-weight: 700;
+  color: var(--sm-muted); text-decoration: none; transition: background .15s, color .15s;
+}
+.sm-seg a:hover { color: var(--sm-red); }
+.sm-seg a.active { background: #fff; color: var(--sm-red); box-shadow: 0 1px 4px rgba(60,12,12,.12); }
+
+/* ---------- Footer tabel ---------- */
+.sm-foot {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+  padding: .8rem 1rem; border-top: 1px solid var(--sm-line); background: #FFFCFA;
+  font-size: .8rem; color: var(--sm-muted);
+}
+.sm-foot nav { margin: 0; }
+.sm-foot .pagination { margin: 0; }
+
+@media (max-width: 767.98px) {
+  .sm-head, .sm-card { margin-left: .75rem; margin-right: .75rem; }
+  .sm-head { padding-left: .25rem; padding-right: .25rem; }
+}
