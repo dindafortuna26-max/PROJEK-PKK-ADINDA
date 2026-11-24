@@ -18,6 +18,7 @@ class Menu extends Model
         'deskripsi',
         'gambar',
         'stok_minimum',
+        'jatah_harian',
         'is_active',
     ];
 
@@ -26,6 +27,7 @@ class Menu extends Model
         return [
             'is_active' => 'boolean',
             'stok_minimum' => 'integer',
+            'jatah_harian' => 'integer',
         ];
     }
 
@@ -54,7 +56,8 @@ class Menu extends Model
     {
         return $this->belongsToMany(Ukuran::class, 'menu_ukuran')
             ->withPivot(['id', 'harga', 'is_active'])
-            ->withTimestamps();
+            ->withTimestamps()
+            ->urutKecilKeBesar();
     }
 
     // Hanya ukuran yang aktif — ini yang dipakai untuk tampil di
@@ -70,7 +73,7 @@ class Menu extends Model
      */
     public function getHargaMinAttribute(): ?int
     {
-        return $this->ukuranAktif()->min('menu_ukuran.harga');
+        return $this->ukuranAktif()->reorder()->min('menu_ukuran.harga');
     }
 
     /**
@@ -78,7 +81,7 @@ class Menu extends Model
      */
     public function getHargaMaxAttribute(): ?int
     {
-        return $this->ukuranAktif()->max('menu_ukuran.harga');
+        return $this->ukuranAktif()->reorder()->max('menu_ukuran.harga');
     }
 
     /**
@@ -143,6 +146,54 @@ class Menu extends Model
     public function getStokMasukTerakhirAttribute(): ?PergerakanStok
     {
         return $this->pergerakanStok()
+            ->where('jenis', 'masuk')
+            ->latest('tanggal')
+            ->latest('id')
+            ->first();
+    }
+
+    // ================= STOK PER KASIR =================
+    // Tiap kasir punya stok sendiri: SUM(masuk) - SUM(keluar) pada baris
+    // log dengan kasir_id = kasir itu. Accessor stok_saat_ini / status_stok
+    // di atas tetap berarti TOTAL gabungan semua kasir (dipakai admin).
+
+    public function stokUntukKasir(int $kasirId): int
+    {
+        $masuk = $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'masuk')->sum('jumlah');
+        $keluar = $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'keluar')->sum('jumlah');
+
+        return (int) ($masuk - $keluar);
+    }
+
+    /**
+     * Dianggap "dikelola" untuk kasir ini kalau admin pernah mengisi stok
+     * (baris masuk) untuknya. Kalau belum, tidak diblokir di transaksi
+     * (sama filosofi "Belum Dikelola" yang sudah ada).
+     */
+    public function dikelolaUntukKasir(int $kasirId): bool
+    {
+        return $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'masuk')->exists();
+    }
+
+    public function statusStokUntukKasir(int $kasirId): string
+    {
+        if (! $this->dikelolaUntukKasir($kasirId)) {
+            return 'belum_dikelola';
+        }
+
+        $stok = $this->stokUntukKasir($kasirId);
+
+        return match (true) {
+            $stok <= 0 => 'habis',
+            $stok <= $this->stok_minimum => 'menipis',
+            default => 'aman',
+        };
+    }
+
+    public function stokMasukTerakhirUntukKasir(int $kasirId)
+    {
+        return $this->pergerakanStok()
+            ->where('kasir_id', $kasirId)
             ->where('jenis', 'masuk')
             ->latest('tanggal')
             ->latest('id')

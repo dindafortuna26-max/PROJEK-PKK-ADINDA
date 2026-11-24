@@ -36,8 +36,11 @@
 </head>
 <body>
 
-  <div class="btn-print-bar">
+  <div class="btn-print-bar" @if (! empty($embed)) style="display:none" @endif>
     <button type="button" onclick="window.print()">🖨️ Cetak Sekarang</button>
+    @isset($kembaliUrl)
+      <button type="button" onclick="window.location.href='{{ $kembaliUrl }}'" style="background:#666;margin-left:6px;">↩ Kembali</button>
+    @endisset
   </div>
 
   <div class="center">
@@ -120,9 +123,20 @@
   </div>
 
   <script>
-    window.onload = function () {
-      window.print();
-    };
+    @if (empty($embed))
+    @isset($kembaliUrl)
+      // Selesai cetak (atau dialog cetak ditutup) -> langsung balik ke halaman transaksi.
+      window.addEventListener('afterprint', function () {
+        window.location.href = @json($kembaliUrl);
+      });
+    @endisset
+
+    // Jeda singkat supaya halaman selesai dirender dulu; kalau print() dipanggil
+    // terlalu cepat sebagian browser mengabaikannya (dialog tidak muncul).
+    window.addEventListener('load', function () {
+      setTimeout(function () { window.print(); }, 400);
+    });
+    @endif
   </script>
 </body>
 </html>

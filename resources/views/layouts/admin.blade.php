@@ -7,7 +7,8 @@
   <title>@yield('title', 'Cimol Bojot AA' . ' - Panel Utama')</title>
 
   <!-- Favicon (ganti file ini juga kalau mau branding penuh) -->
-  <link rel="icon" type="image/png" href="{{ asset('assets_dashboard/images/favicon.ico') }}">
+  <link rel="icon" type="image/png" href="{{ asset('assets_dashboard/images/logo-cimol-bulat.png') }}?v=2">
+  <link rel="apple-touch-icon" href="{{ asset('assets_dashboard/images/logo-cimol-bulat.png') }}?v=2">
 
   <!-- Local Third-Party Libraries CSS -->
   <link rel="stylesheet" href="{{ asset('assets_dashboard/libs/bootstrap/css/bootstrap.min.css') }}">
@@ -416,7 +417,7 @@
             </div>
             <div class="notification-list">
               @forelse (($notifStok ?? collect()) as $notif)
-                <a href="{{ auth()->user()->role === 'admin' ? route('admin.stok.index') : route('kasir.stok.index') }}" class="notification-item">
+                <a href="{{ (auth()->user()->role === 'admin' ? route('admin.stok.index') : route('kasir.stok.index')) . '?tab=' . ($notif['tab'] ?? 'data-stok') }}" class="notification-item">
                   <div class="notification-icon {{ $notif['status'] === 'habis' ? 'bg-danger text-white' : 'bg-warning text-dark' }}">
                     <i class="bi {{ $notif['status'] === 'habis' ? 'bi-x-circle' : 'bi-exclamation-triangle' }}"></i>
                   </div>
@@ -606,8 +607,8 @@
         if (url.indexOf('toggle-status') !== -1) return 'status';
         if (url.indexOf('reset-password') !== -1) return 'password';
         if (url.indexOf('koreksi') !== -1) return 'koreksi';
-        if (url.indexOf('/stok/bahan/') !== -1 && url.indexOf('/ganti') !== -1) return 'ganti';
-        if (url.indexOf('/stok/bahan/') !== -1 && url.indexOf('/goreng') !== -1) return 'goreng';
+        if (url.indexOf('/stok/bahan/') !== -1 && url.indexOf('/minta') !== -1) return 'minta';
+        if (url.indexOf('/stok/bahan/jatah-harian') !== -1) return 'jatah';
         if (url.indexOf('/transaksi') !== -1 && method === 'POST') return 'transaksi';
         if (method === 'PUT' || method === 'PATCH') return 'edit';
         return 'tambah';
@@ -629,8 +630,8 @@
         password:  'Password berhasil direset',
         koreksi:   'Stok berhasil dikoreksi',
         transaksi: 'Transaksi berhasil disimpan',
-        ganti:     'Konfirmasi tersimpan',
-        goreng:    'Hitungan goreng bertambah'
+        minta:     'Permintaan terkirim ke admin',
+        jatah:     'Jatah harian dibagikan'
       };
       var JUDUL_GAGAL = {
         tambah: 'Data gagal ditambahkan',

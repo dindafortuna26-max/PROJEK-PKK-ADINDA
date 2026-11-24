@@ -31,9 +31,16 @@ class KasirController extends Controller
                         ->orWhere('email', 'like', "%{$cari}%");
                 });
             })
+            ->when(in_array($request->input('status'), ['aktif', 'nonaktif'], true), function ($query) use ($request) {
+                $query->where('is_active', $request->input('status') === 'aktif');
+            })
+            ->withCount('transaksis')
             ->orderBy('name')
             ->paginate(10)
             ->withQueryString();
+
+        // Kasir aktif untuk deretan foto di papan tim (maks. 5).
+        $tim = User::kasir()->where('is_active', true)->orderBy('name')->take(5)->get();
 
         $ringkasan = [
             'total' => User::kasir()->count(),
@@ -44,6 +51,7 @@ class KasirController extends Controller
         return view('admin.kasir.index', [
             'kasirs' => $kasirs,
             'ringkasan' => $ringkasan,
+            'tim' => $tim,
         ]);
     }
 
@@ -55,7 +63,7 @@ class KasirController extends Controller
     {
         $data = $request->validate(array_merge([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:6', 'regex:/[\d\p{P}\p{S}]/u', 'confirmed'],
         ], $this->aturanProfil()), $this->pesanValidasi());
 
         $kasir = User::create([
@@ -142,10 +150,11 @@ class KasirController extends Controller
         $this->tolakJikaBukanKasir($kasir);
 
         $data = $request->validate([
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:6', 'regex:/[\d\p{P}\p{S}]/u', 'confirmed'],
         ], [
             'password.required' => 'Password baru wajib diisi.',
             'password.min' => 'Password minimal 6 karakter.',
+            'password.regex' => 'Password tidak boleh huruf semua, harus ada angka atau simbol.',
             'password.confirmed' => 'Konfirmasi password tidak sama.',
         ]);
 
@@ -167,7 +176,9 @@ class KasirController extends Controller
 
         $punyaRiwayat = Transaksi::where('user_id', $kasir->id)->exists()
             || PergerakanStok::where('user_id', $kasir->id)->exists()
-            || PergerakanStokTopping::where('user_id', $kasir->id)->exists();
+            || PergerakanStokTopping::where('user_id', $kasir->id)->exists()
+            || PergerakanStok::where('kasir_id', $kasir->id)->exists()
+            || PergerakanStokTopping::where('kasir_id', $kasir->id)->exists();
 
         if ($punyaRiwayat) {
             return back()->with('error', "Akun \"{$kasir->name}\" tidak bisa dihapus karena sudah punya riwayat transaksi/stok. Nonaktifkan saja akunnya.");
@@ -188,7 +199,7 @@ class KasirController extends Controller
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'no_hp' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]+$/'],
+            'no_hp' => ['nullable', 'string', 'max:13', 'regex:/^[0-9]+$/'],
             'jenis_kelamin' => ['nullable', 'in:L,P'],
             'tanggal_lahir' => ['nullable', 'date', 'before:today'],
             'alamat' => ['nullable', 'string', 'max:500'],
@@ -201,13 +212,15 @@ class KasirController extends Controller
     {
         return [
             'name.required' => 'Nama kasir wajib diisi.',
+            'password.regex' => 'Password tidak boleh huruf semua, harus ada angka atau simbol.',
             'email.required' => 'Email wajib diisi.',
             'email.email' => 'Format email tidak valid.',
             'email.unique' => 'Email ini sudah dipakai akun lain.',
             'password.required' => 'Password wajib diisi.',
             'password.min' => 'Password minimal 6 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak sama.',
-            'no_hp.regex' => 'No. HP hanya boleh berisi angka, spasi, dan tanda + - ( ).',
+            'no_hp.regex' => 'No. HP hanya boleh berisi angka (tanpa spasi atau tanda lain).',
+            'no_hp.max' => 'No. HP maksimal 13 digit.',
             'jenis_kelamin.in' => 'Jenis kelamin tidak valid.',
             'tanggal_lahir.date' => 'Tanggal lahir tidak valid.',
             'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini.',

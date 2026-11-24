@@ -43,7 +43,7 @@
   @php
     $adaFilter = request()->anyFilled(['cari', 'kasir_id', 'tanggal', 'metode_bayar']);
     $namaKasirDipilih = request('kasir_id') ? optional(collect($daftarKasir)->firstWhere('id', (int) request('kasir_id')))->name : null;
-    $labelMetode = ['cash' => 'Cash', 'qris' => 'QRIS', 'paylater' => 'PayLater'];
+    $labelMetode = ['cash' => 'Cash', 'qris' => 'QRIS'];
   @endphp
 
   <!-- START: Filter Card -->
@@ -96,7 +96,6 @@
           <option value="">Semua Metode</option>
           <option value="cash" {{ request('metode_bayar') === 'cash' ? 'selected' : '' }}>Cash</option>
           <option value="qris" {{ request('metode_bayar') === 'qris' ? 'selected' : '' }}>QRIS</option>
-          <option value="paylater" {{ request('metode_bayar') === 'paylater' ? 'selected' : '' }}>PayLater</option>
         </select>
       </div>
 

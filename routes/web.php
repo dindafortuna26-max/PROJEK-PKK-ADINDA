@@ -23,36 +23,37 @@ Route::get('/', function () {
 });
 
 // Dashboard (omzet, grafik, dll) khusus Admin — makanya pakai middleware
-// 'admin' juga, bukan cuma 'auth'. Kasir yang coba akses langsung ditolak
-// (403) supaya data omzet toko nggak kelihat oleh akun kasir.
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'admin'])
     ->name('dashboard');
 
-// Halaman "rumah" buat Kasir setelah login (belum ada Dashboard di role
-// Kasir sesuai struktur fitur — ini cuma sapaan + jalan pintas ke
-// Transaksi/Cek Stok/Riwayat Transaksi begitu modul-modul itu jadi).
+
 Route::get('/beranda', [BerandaController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('kasir.home');
 
-// Modul Transaksi milik Kasir (input penjualan): pilih menu, ukuran,
-// saus, bubuk tabur, sampai metode bayar. Tidak dibatasi middleware
-// 'admin' supaya kasir bisa akses, tapi controller-nya sendiri boleh
-// diakses admin juga (mis. buat uji coba) — sama pola dengan /beranda.
+
 Route::middleware(['auth', 'verified'])->prefix('transaksi')->name('kasir.transaksi.')->group(function () {
     Route::get('/', [KasirTransaksiController::class, 'index'])->name('index');
     Route::post('/', [KasirTransaksiController::class, 'store'])->name('store');
     Route::get('/{transaksi}/struk', [KasirTransaksiController::class, 'struk'])->name('struk');
 });
 
-// Halaman "Cek Stok" milik Kasir — READ ONLY (cuma lihat sisa stok menu
-// & topping/bumbu, tidak ada tombol tambah/edit/hapus sama sekali).
-// Sengaja dibuat controller & route sendiri (bukan pakai Admin\StokController)
-// supaya tidak ada satupun aksi tulis yang kebuka buat role kasir.
+
 Route::get('/stok', [KasirStokController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('kasir.stok.index');
+
+// Kasir melapor minyak goreng / gas jatahnya habis -> permintaan ke admin.
+Route::post('/stok/bahan/{bahanOperasional}/minta', [KasirStokController::class, 'mintaBahan'])
+    ->middleware(['auth', 'verified'])
+    ->name('kasir.stok.bahan.minta');
+
+// Kasir menjawab "Sudah / Belum" untuk minyak / gas yang dikirim admin.
+// Stok kasir baru terisi setelah dijawab "Sudah".
+Route::post('/stok/bahan/{bahanOperasional}/konfirmasi', [KasirStokController::class, 'konfirmasiTerimaBahan'])
+    ->middleware(['auth', 'verified'])
+    ->name('kasir.stok.bahan.konfirmasi');
 
 // Halaman "Riwayat Transaksi" milik Kasir — READ ONLY & MILIK SENDIRI.
 // Beda dari punya Admin (RiwayatTransaksiController di atas) yang bisa
@@ -89,6 +90,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/menu/{menu}/edit', [MenuController::class, 'edit'])->name('menu.edit');
     Route::put('/menu/{menu}', [MenuController::class, 'update'])->name('menu.update');
     Route::patch('/menu/{menu}/toggle-status', [MenuController::class, 'toggleStatus'])->name('menu.toggle-status');
+    Route::delete('/menu/{menu}', [MenuController::class, 'destroy'])->name('menu.destroy');
 
     Route::get('/menu/{menu}/ukuran', [MenuUkuranController::class, 'edit'])->name('menu.ukuran.edit');
     Route::put('/menu/{menu}/ukuran', [MenuUkuranController::class, 'update'])->name('menu.ukuran.update');
@@ -114,16 +116,19 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::get('/stok', [StokController::class, 'index'])->name('stok.index');
     Route::post('/stok', [StokController::class, 'storeMasuk'])->name('stok.store');
+    Route::post('/stok/jatah-harian', [StokController::class, 'bagikanJatahHarianMenu'])->name('stok.jatah-harian');
     Route::patch('/stok/{menu}/koreksi', [StokController::class, 'koreksi'])->name('stok.koreksi');
     Route::delete('/stok/{menu}/riwayat', [StokController::class, 'hapusRiwayat'])->name('stok.hapus-riwayat');
     Route::delete('/stok/riwayat/{pergerakanStok}', [StokController::class, 'hapusEntriMasuk'])->name('stok.hapus-entri-masuk');
 
     Route::post('/stok/topping', [StokController::class, 'storeMasukTopping'])->name('stok.topping.store');
+    Route::post('/stok/topping/jatah-harian', [StokController::class, 'bagikanJatahHarianTopping'])->name('stok.topping.jatah-harian');
     Route::patch('/stok/topping/{topping}/koreksi', [StokController::class, 'koreksiTopping'])->name('stok.topping.koreksi');
     Route::delete('/stok/topping/{topping}/riwayat', [StokController::class, 'hapusRiwayatTopping'])->name('stok.topping.hapus-riwayat');
     Route::delete('/stok/topping/riwayat/{pergerakanStokTopping}', [StokController::class, 'hapusEntriMasukTopping'])->name('stok.topping.hapus-entri-masuk');
 
     Route::post('/stok/bahan', [StokController::class, 'storeMasukBahan'])->name('stok.bahan.store');
+    Route::post('/stok/bahan/jatah-harian', [StokController::class, 'bagikanJatahHarian'])->name('stok.bahan.jatah-harian');
     Route::patch('/stok/bahan/{bahanOperasional}/koreksi', [StokController::class, 'koreksiBahan'])->name('stok.bahan.koreksi');
     Route::delete('/stok/bahan/{bahanOperasional}/riwayat', [StokController::class, 'hapusRiwayatBahan'])->name('stok.bahan.hapus-riwayat');
     Route::delete('/stok/bahan/riwayat/{pergerakanStokBahanOperasional}', [StokController::class, 'hapusEntriMasukBahan'])->name('stok.bahan.hapus-entri-masuk');

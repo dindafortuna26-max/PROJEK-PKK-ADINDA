@@ -56,7 +56,7 @@
         <div>
           <div class="mstat-label">Total Non-Tunai</div>
           <div class="mstat-value">Rp {{ number_format($ringkasan['total_non_tunai'], 0, ',', '.') }}</div>
-          <div class="text-muted" style="font-size:.74rem;">QRIS + PayLater</div>
+          <div class="text-muted" style="font-size:.74rem;">QRIS</div>
         </div>
       </div>
     </div>
@@ -95,7 +95,6 @@
           <option value="">Semua Metode</option>
           <option value="cash" {{ request('metode_bayar') === 'cash' ? 'selected' : '' }}>Cash</option>
           <option value="qris" {{ request('metode_bayar') === 'qris' ? 'selected' : '' }}>QRIS</option>
-          <option value="paylater" {{ request('metode_bayar') === 'paylater' ? 'selected' : '' }}>PayLater</option>
         </select>
       </div>
 
@@ -251,10 +250,6 @@
           kosong.classList.remove('d-none');
           tandaiBarisAktif(null);
           return;
-        }
-        const btnCetak = e.target.closest('.btn-cetak-struk');
-        if (btnCetak) {
-          window.open(btnCetak.dataset.strukUrl, '_blank');
         }
       });
     })();

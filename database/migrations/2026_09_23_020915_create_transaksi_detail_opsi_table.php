@@ -20,6 +20,7 @@ return new class extends Migration
         Schema::create('transaksi_detail_opsi', function (Blueprint $table) {
             $table->id();
             $table->foreignId('transaksi_detail_id')->constrained('transaksi_detail')->cascadeOnDelete();
+            // * Kode ini digunakan untuk membuat foreign key bernama topping_id yang terhubung dengan tabel toppings. Kolom tersebut boleh bernilai NULL. Jika data topping dihapus, data yang terhubung tidak ikut terhapus, tetapi nilai topping_id akan otomatis menjadi NULL
             $table->foreignId('topping_id')->nullable()->constrained('toppings')->nullOnDelete();
 
             $table->string('nama_topping');                 // snapshot

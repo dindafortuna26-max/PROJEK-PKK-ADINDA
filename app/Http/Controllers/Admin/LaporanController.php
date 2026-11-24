@@ -14,18 +14,7 @@ use Illuminate\View\View;
 
 class LaporanController extends Controller
 {
-    /**
-     * GET /admin/laporan
-     * Rekap penjualan per periode (harian/mingguan/bulanan/custom),
-     * bisa disaring per varian menu & metode bayar.
-     *
-     * PENTING: halaman ini TIDAK punya tabel/summary sendiri di
-     * database. Semua angka dihitung langsung dari tabel transaksis +
-     * transaksi_detail — sumber data yang SAMA PERSIS dengan modul
-     * Riwayat Transaksi. Jadi begitu ada transaksi baru (atau modul
-     * Transaksi Kasir sudah jadi), Laporan ini otomatis ikut ter-update
-     * tanpa perlu sinkronisasi manual apa pun.
-     */
+   
     public function index(Request $request): View
     {
         [$periode, $mulai, $akhir] = $this->resolvePeriode($request);
@@ -263,7 +252,7 @@ class LaporanController extends Controller
                 ];
             })->sortByDesc('omzet')->values()->all();
 
-            $labelMetode = ['cash' => 'Tunai', 'qris' => 'QRIS', 'paylater' => 'PayLater'];
+            $labelMetode = ['cash' => 'Tunai', 'qris' => 'QRIS'];
             foreach ($labelMetode as $kode => $label) {
                 $kelompok = $transaksi->where('metode_bayar', $kode);
                 $perMetodeNominal[] = [

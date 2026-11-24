@@ -16,6 +16,7 @@ class PergerakanStokTopping extends Model
     protected $fillable = [
         'topping_id',
         'user_id',
+        'kasir_id',
         'jenis',
         'jumlah',
         'keterangan',
@@ -38,5 +39,11 @@ class PergerakanStokTopping extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Kasir PEMILIK stok pada baris log ini (beda dari user, yaitu pencatatnya).
+    public function kasir(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'kasir_id');
     }
 }

@@ -21,10 +21,9 @@ class MenuUkuranController extends Controller
      */
     public function edit(Menu $menu): View
     {
-        $ukurans = Ukuran::where('is_active', true)->orderBy('nama')->get();
+        $ukurans = Ukuran::where('is_active', true)->urutKecilKeBesar()->get();
 
-        // Ambil baris menu_ukuran yang sudah ada punya menu ini,
-        // di-index by ukuran_id biar mudah dicocokkan di view.
+
         $menuUkurans = $menu->menuUkurans()->get()->keyBy('ukuran_id');
 
         return view('admin.menu.ukuran', [
@@ -34,13 +33,7 @@ class MenuUkuranController extends Controller
         ]);
     }
 
-    /**
-     * PUT /admin/menu/{menu}/ukuran
-     * Form kirim array per ukuran: aktif[ukuran_id] (checkbox) dan
-     * harga[ukuran_id] (angka). Kalau harga dikosongkan, baris untuk
-     * ukuran itu dilewati (tidak dibuat/diubah) supaya tidak ada
-     * kombinasi menu+ukuran dengan harga 0 secara tidak sengaja.
-     */
+ 
     public function update(Request $request, Menu $menu): RedirectResponse
     {
         $data = $request->validate([
@@ -52,11 +45,11 @@ class MenuUkuranController extends Controller
         $harga = $data['harga'] ?? [];
         $aktif = $data['aktif'] ?? [];
 
+        //* Kode ini digunakan untuk melakukan perulangan pada semua ID ukuran yang ada di database, kemudian mengambil harga berdasarkan ID ukuran tersebut. Jika harga tidak ditemukan, maka nilainya akan diisi nul
         foreach (Ukuran::pluck('id') as $ukuranId) {
             $hargaUkuran = $harga[$ukuranId] ?? null;
 
-            // Belum diisi harganya sama sekali & belum pernah ada baris
-            // sebelumnya -> lewati, tidak usah dibuat baris kosong.
+
             if ($hargaUkuran === null || $hargaUkuran === '') {
                 continue;
             }

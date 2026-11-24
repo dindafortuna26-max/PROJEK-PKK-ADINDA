@@ -68,8 +68,8 @@ class LaporanController extends Controller
         $itemTerjual = (int) TransaksiDetail::whereIn('transaksi_id', $transaksiIds)->sum('jumlah');
 
         // ---- rincian per metode bayar ----
-        $labelMetode = ['cash' => 'Tunai', 'qris' => 'QRIS', 'paylater' => 'PayLater'];
-        $iconMetode = ['cash' => 'bi-cash-stack', 'qris' => 'bi-qr-code-scan', 'paylater' => 'bi-clock-history'];
+        $labelMetode = ['cash' => 'Tunai', 'qris' => 'QRIS'];
+        $iconMetode = ['cash' => 'bi-cash-stack', 'qris' => 'bi-qr-code-scan'];
 
         $barisMetode = $base()
             ->select('metode_bayar', DB::raw('COUNT(*) as jumlah'), DB::raw('SUM(total) as nominal'))

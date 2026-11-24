@@ -672,3 +672,52 @@ body{
 .rt-rk b{display:block;font-size:1.12rem;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .ap-hero .ap-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.1rem;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(8px);text-decoration:none}
 .ap-hero .ap-btn:hover{background:rgba(255,255,255,.3);color:#fff}
+
+/* =====================================================================
+   PERBAIKAN HALAMAN PROFIL
+   1) Nama + statistik tidak lagi menempel/kepotong oleh cover
+   2) Bar "Simpan Perubahan" tetap di bawah form (tidak ikut melayang)
+===================================================================== */
+.profile-hero-body{
+  align-items:flex-end;
+  gap:1rem 1.5rem;
+  padding:0 1.75rem 1.5rem;
+}
+/* avatar tetap naik ke cover, tapi info & statistik dimulai di bawah cover */
+.profile-hero-info,
+.profile-hero-stats{
+  padding-top:64px;            /* tinggi cover yang tertimpa avatar (48px) + jarak napas */
+  padding-bottom:.25rem;
+}
+.profile-hero-name{
+  line-height:1.3;
+  margin:0 0 .6rem;
+  padding-top:.15rem;
+}
+.profile-hero-meta{ gap:.6rem 1rem; }
+.profile-hero-stats{ gap:1rem; }
+.profile-stat{
+  min-width:112px;
+  padding:.8rem 1.25rem!important;
+}
+.profile-stat-value{ line-height:1.2; margin-bottom:.2rem; }
+.profile-stat-label{ line-height:1.2; }
+
+@media (max-width:575.98px){
+  .profile-hero-body{ padding:0 1.1rem 1.25rem; }
+  .profile-hero-info,.profile-hero-stats{ padding-top:0; }
+  .profile-hero-avatar{ margin-bottom:.25rem; }
+  .profile-hero-stats{ width:100%; }
+  .profile-stat{ flex:1 1 0; min-width:0; }
+}
+
+/* Bar simpan: statis di bawah form, bukan sticky/fixed */
+.form-savebar{
+  position:static;
+  display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  margin-top:1.75rem; padding:.9rem 1.1rem;
+  background:#FDF6F4; border:1px solid var(--p-line,#EAD3CA); border-radius:18px;
+}
+.form-savebar-text{ font-size:.88rem; color:var(--text-muted-green,#7A5C5C); }
+.form-savebar.is-dirty .form-savebar-text{ color:#8C1F1F; font-weight:700; }
+.form-savebar .btn-custom[disabled]{ opacity:.55; cursor:not-allowed; box-shadow:none; }

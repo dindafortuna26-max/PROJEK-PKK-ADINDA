@@ -29,7 +29,7 @@
         (object) ['no' => 'TRX-00048', 'tanggal' => '12 Jul 2025 14:32', 'kasir' => 'Siti',  'total' => 86000,  'metode' => 'Cash',     'status' => 'Selesai'],
         (object) ['no' => 'TRX-00047', 'tanggal' => '12 Jul 2025 14:17', 'kasir' => 'Rina',  'total' => 124000, 'metode' => 'QRIS',     'status' => 'Selesai'],
         (object) ['no' => 'TRX-00046', 'tanggal' => '12 Jul 2025 13:52', 'kasir' => 'Dewi',  'total' => 72000,  'metode' => 'Cash',     'status' => 'Selesai'],
-        (object) ['no' => 'TRX-00045', 'tanggal' => '12 Jul 2025 13:20', 'kasir' => 'Siti',  'total' => 98000,  'metode' => 'PayLater', 'status' => 'Selesai'],
+        (object) ['no' => 'TRX-00045', 'tanggal' => '12 Jul 2025 13:20', 'kasir' => 'Siti',  'total' => 98000,  'metode' => 'QRIS', 'status' => 'Selesai'],
         (object) ['no' => 'TRX-00044', 'tanggal' => '12 Jul 2025 12:58', 'kasir' => 'Rina',  'total' => 65000,  'metode' => 'Cash',     'status' => 'Selesai'],
     ]);
 

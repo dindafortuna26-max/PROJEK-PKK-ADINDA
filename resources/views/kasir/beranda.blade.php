@@ -106,11 +106,9 @@
         <div class="db-split" aria-hidden="true">
           <i class="c-cash" style="width: {{ $ringkasan['cash'] / $totalSplit * 100 }}%"></i>
           <i class="c-qris" style="width: {{ $ringkasan['qris'] / $totalSplit * 100 }}%"></i>
-          <i class="c-pay" style="width: {{ $ringkasan['paylater'] / $totalSplit * 100 }}%"></i>
         </div>
         <div class="db-pay-row"><img src="{{ asset('assets_dashboard/images/pay/cash.svg') }}" alt=""><b>Cash</b><span>{{ $rp($ringkasan['cash']) }}</span></div>
         <div class="db-pay-row"><img src="{{ asset('assets_dashboard/images/pay/qris.svg') }}" alt=""><b>QRIS</b><span>{{ $rp($ringkasan['qris']) }}</span></div>
-        <div class="db-pay-row"><img src="{{ asset('assets_dashboard/images/pay/paylater.svg') }}" alt=""><b>PayLater</b><span>{{ $rp($ringkasan['paylater']) }}</span></div>
       </div>
     </div>
   </div>

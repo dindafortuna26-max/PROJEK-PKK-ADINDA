@@ -14,7 +14,7 @@
   <div class="ap-hero">
     <div>
       <h1>Master Bahan Operasional</h1>
-      <p>Daftar bahan seperti minyak goreng dan gas. Tidak ikut terjual di transaksi, tapi stoknya berkurang otomatis tiap penggorengan dan habisnya langsung muncul di notifikasi.</p>
+      <p>Daftar bahan pendukung usaha: minyak goreng, gas, dan kemasan (cup/box). Tidak ikut terjual di transaksi. Minyak &amp; gas diberi manual ke tiap kasir, sedangkan kemasan berkurang otomatis sesuai ukuran porsi yang terjual.</p>
     </div>
     <button type="button" class="ap-btn" data-bs-toggle="modal" data-bs-target="#modal-tambah-bahan">
       <i class="bi bi-plus-lg"></i>
@@ -32,17 +32,18 @@
   @endif
 
   <div class="ap-stats">
-    <div class="ap-stat"><i class="bi bi-fire"></i><div><b>{{ $bahanList->count() }}</b><span>Total bahan</span></div></div>
-    <div class="ap-stat"><i class="bi bi-check2-circle"></i><div><b>{{ $bahanList->where('is_active', true)->count() }}</b><span>Aktif dipantau</span></div></div>
+    <div class="ap-stat"><i class="bi bi-boxes"></i><div><b>{{ $jumlahSemua }}</b><span>Total bahan</span></div></div>
+    <div class="ap-stat"><i class="bi bi-box-seam"></i><div><b>{{ $jumlahKemasan }}</b><span>Kemasan</span></div></div>
+    <div class="ap-stat"><i class="bi bi-check2-circle"></i><div><b>{{ $jumlahAktif }}</b><span>Aktif dipantau</span></div></div>
   </div>
 
   <div class="ap-panel">
 
-    <div class="bo-info">
-      <i class="bi bi-info-circle-fill"></i>
-      <div>
-        <b>Cara kerjanya</b>
-        <p>Kamu isi stok dalam liter (minyak) atau tabung (gas) lewat Manajemen Stok, 1 sampai 5 per input. Tiap satuan setara beberapa sesi goreng: 1 liter minyak = 10 transaksi, 1 tabung gas 3 kg = 20 transaksi. Setiap transaksi selesai, stoknya otomatis berkurang 1 sesi. Begitu sisanya menipis atau habis, notifikasi muncul di lonceng admin.</p>
+    <div class="bo-filter">
+      <div class="bo-seg" role="group" aria-label="Filter jenis bahan">
+        @foreach (['' => 'Semua', 'habis_pakai' => 'Bahan Habis-Pakai', 'kemasan' => 'Kemasan'] as $kunci => $teks)
+          <a href="{{ request()->fullUrlWithQuery(['jenis' => $kunci ?: null]) }}" class="{{ $filterJenis === $kunci ? 'active' : '' }}">{{ $teks }}</a>
+        @endforeach
       </div>
     </div>
 
@@ -52,9 +53,10 @@
           <tr>
             <th>No</th>
             <th>Nama Bahan</th>
+            <th>Jenis</th>
             <th>Satuan Stok</th>
-            <th>Setara</th>
-            <th>Menipis Saat Sisa ≤</th>
+            <th>Pemakaian</th>
+            <th>Jatah Harian per Kasir</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
@@ -69,9 +71,20 @@
                   <span class="table-product-name mb-0">{{ $bahan->nama }}</span>
                 </div>
               </td>
+              <td>
+                <span class="bo-jenis-badge {{ $bahan->is_kemasan ? 'kemasan' : '' }}">
+                  <i class="bi {{ $bahan->is_kemasan ? 'bi-box-seam' : 'bi-droplet-half' }}"></i>{{ $bahan->label_jenis }}
+                </span>
+              </td>
               <td>{{ $bahan->satuan }}</td>
-              <td>1 {{ $bahan->satuan }} = {{ $bahan->sesi_per_satuan }} sesi goreng</td>
-              <td>{{ $bahan->stok_minimum }} sesi</td>
+              <td>
+                @if ($bahan->is_kemasan)
+                  <span class="bo-pakai auto"><i class="bi bi-magic"></i>{{ $bahan->aturan_pakai }}</span>
+                @else
+                  <span class="bo-pakai">Manual</span>
+                @endif
+              </td>
+              <td>{{ $bahan->jatah_harian > 0 ? $bahan->labelJumlah($bahan->jatah_harian) : '-' }}</td>
               <td><span class="badge-table {{ $bahan->is_active ? 'success' : '' }}">{{ $bahan->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
               <td>
                 <div class="d-flex flex-wrap gap-2">
@@ -104,8 +117,8 @@
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="text-center py-4" style="color: var(--text-muted-green);">
-                Belum ada bahan operasional. Klik "Tambah Bahan Operasional", contoh: Minyak Goreng (liter, 10 sesi) dan Gas (tabung, 20 sesi).
+              <td colspan="8" class="text-center py-4" style="color: var(--text-muted-green);">
+                Belum ada bahan operasional{{ $filterJenis ? " pada jenis ini" : "" }}. Klik "Tambah Bahan Operasional", contoh: Minyak Goreng (liter, jatah 5), Gas (tabung, jatah 1), atau Cup Kecil (pcs, ukuran Kecil).
               </td>
             </tr>
           @endforelse
@@ -113,6 +126,14 @@
       </table>
     </div>
   </div>
+
+  <datalist id="bo-satuan-saran">
+    <option value="liter"></option>
+    <option value="tabung"></option>
+    <option value="pcs"></option>
+    <option value="pack"></option>
+    <option value="dus"></option>
+  </datalist>
 
   <!-- ===================== MODAL: TAMBAH ===================== -->
   <div class="modal fade" id="modal-tambah-bahan" tabindex="-1" aria-hidden="true">
@@ -126,7 +147,7 @@
             <div class="modal-header-icon"><i class="bi bi-plus-lg"></i></div>
             <div>
               <h5 class="modal-title mb-0">Tambah Bahan Operasional</h5>
-              <small class="modal-subtitle">Minyak goreng, gas, atau bahan habis-pakai lainnya.</small>
+              <small class="modal-subtitle">Minyak goreng, gas, atau kemasan (cup, box) per ukuran.</small>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
@@ -135,6 +156,7 @@
             @include('admin.bahan-operasional._form-fields', [
                 'bahan' => null,
                 'aktif' => old('_action') === 'tambah-bahan',
+                'ukuranList' => $ukuranList,
             ])
           </div>
 
@@ -170,6 +192,7 @@
               @include('admin.bahan-operasional._form-fields', [
                   'bahan' => $bahan,
                   'aktif' => old('_action') === 'edit-bahan-' . $bahan->id,
+                  'ukuranList' => $ukuranList,
               ])
             </div>
 
@@ -188,6 +211,65 @@
 
 @push('scripts')
   <script>
+    // Ganti jenis bahan (habis-pakai / kemasan): tampilkan isian khusus kemasan,
+    // ubah teks bantuan, dan sesuaikan satuan bawaan (liter <-> pcs).
+    (function () {
+      var SATUAN_BAWAAN = { habis_pakai: 'liter', kemasan: 'pcs' };
+
+      document.querySelectorAll('[data-bo-form]').forEach(function (root) {
+        var radios = root.querySelectorAll('input[name="jenis"]');
+        var satuan = root.querySelector('[data-bo-satuan]');
+        var nama = root.querySelector('input[name="nama"]');
+        var sufiks = root.querySelectorAll('[data-bo-satuan-teks]');
+        var jenisAwal = root.getAttribute('data-jenis') || 'habis_pakai';
+
+        function jenisTerpilih() {
+          var r = root.querySelector('input[name="jenis"]:checked');
+          return r ? r.value : 'habis_pakai';
+        }
+
+        function teksSatuan() {
+          sufiks.forEach(function (el) { el.textContent = (satuan.value || '').trim() || 'satuan'; });
+        }
+
+        function terapkan(jenis) {
+          root.setAttribute('data-jenis', jenis);
+
+          root.querySelectorAll('[data-bo-hanya]').forEach(function (el) {
+            el.classList.toggle('d-none', el.getAttribute('data-bo-hanya') !== jenis);
+          });
+          root.querySelectorAll('[data-t-' + jenis + ']').forEach(function (el) {
+            el.textContent = el.getAttribute('data-t-' + jenis);
+          });
+          if (nama && nama.hasAttribute('data-p-' + jenis)) {
+            nama.placeholder = nama.getAttribute('data-p-' + jenis);
+          }
+        }
+
+        var sebelumnya = jenisAwal;
+        radios.forEach(function (r) {
+          r.addEventListener('change', function () {
+            var jenis = jenisTerpilih();
+
+            // Satuan hanya diganti kalau masih isi bawaan jenis sebelumnya (atau kosong),
+            // supaya satuan yang sudah diketik sendiri tidak tertimpa.
+            var sekarang = (satuan.value || '').trim().toLowerCase();
+            if (sekarang === '' || sekarang === SATUAN_BAWAAN[sebelumnya]) {
+              satuan.value = SATUAN_BAWAAN[jenis];
+            }
+
+            sebelumnya = jenis;
+            terapkan(jenis);
+            teksSatuan();
+          });
+        });
+
+        satuan.addEventListener('input', teksSatuan);
+        terapkan(jenisTerpilih());
+        teksSatuan();
+      });
+    })();
+
     // Preview foto + tombol Hapus foto di form Tambah/Edit bahan.
     (function () {
       var MAKS = 2 * 1024 * 1024;

@@ -75,11 +75,4 @@
     <div class="rk-r-cash"><span>Uang Diterima</span><b>Rp {{ number_format($transaksi->uang_diterima, 0, ',', '.') }}</b></div>
     <div class="rk-r-cash"><span>Kembalian</span><b>Rp {{ number_format($transaksi->kembalian ?? 0, 0, ',', '.') }}</b></div>
   @endif
-
-  <div class="rk-r-actions">
-    <button type="button" class="rk-btn btn-cetak-struk" data-struk-url="{{ route('kasir.transaksi.struk', $transaksi) }}">
-      <i class="bi bi-printer-fill"></i>
-      <span>Cetak Struk</span>
-    </button>
-  </div>
 </div>

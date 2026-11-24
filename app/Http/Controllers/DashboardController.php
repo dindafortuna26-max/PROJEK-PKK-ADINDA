@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use App\Models\PergerakanStok;
+use App\Models\User;
 use App\Models\Transaksi;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -90,24 +91,36 @@ class DashboardController extends Controller
     }
 
     /**
-     * Stok berjalan = SUM(masuk) - SUM(keluar) per menu, HANYA untuk
-     * menu yang sudah pernah punya pergerakan stok sama sekali (supaya
-     * menu yang memang belum dikelola stoknya tidak ikut dicap "Habis").
+     * Stok berjalan = SUM(masuk) - SUM(keluar) PER MENU PER KASIR, HANYA
+     * untuk pasangan menu-kasir yang sudah pernah diisi stok masuk (supaya
+     * yang memang belum dikelola tidak ikut dicap "Habis"). Nama kasir
+     * ditulis di belakang nama menu.
      */
     private function hitungStokMenipis(): array
     {
-        $menuIdsDikelola = PergerakanStok::query()->distinct()->pluck('menu_id');
+        $baris = PergerakanStok::query()
+            ->whereNotNull('kasir_id')
+            ->selectRaw('menu_id, kasir_id, jenis, SUM(jumlah) as total')
+            ->groupBy('menu_id', 'kasir_id', 'jenis')
+            ->get()
+            ->groupBy(fn ($r) => $r->menu_id . '-' . $r->kasir_id);
 
-        if ($menuIdsDikelola->isEmpty()) {
+        if ($baris->isEmpty()) {
             return [collect(), 0];
         }
 
-        $menus = Menu::whereIn('id', $menuIdsDikelola)->get();
+        $menus = Menu::whereIn('id', $baris->map(fn ($g) => $g->first()->menu_id)->unique())->get()->keyBy('id');
+        $kasirs = User::whereIn('id', $baris->map(fn ($g) => $g->first()->kasir_id)->unique())->pluck('name', 'id');
 
-        $daftar = $menus->map(function (Menu $menu) {
-            $masuk = PergerakanStok::where('menu_id', $menu->id)->where('jenis', 'masuk')->sum('jumlah');
-            $keluar = PergerakanStok::where('menu_id', $menu->id)->where('jenis', 'keluar')->sum('jumlah');
-            $stok = $masuk - $keluar;
+        $daftar = $baris->map(function ($grup) use ($menus, $kasirs) {
+            $menu = $menus->get($grup->first()->menu_id);
+            $masuk = $grup->firstWhere('jenis', 'masuk');
+
+            if (! $menu || ! $masuk) {
+                return null; // belum dikelola untuk kasir ini
+            }
+
+            $stok = (int) $masuk->total - (int) $grup->firstWhere('jenis', 'keluar')?->total;
 
             $status = match (true) {
                 $stok <= 0 => 'habis',
@@ -116,12 +129,12 @@ class DashboardController extends Controller
             };
 
             return (object) [
-                'nama' => $menu->nama,
+                'nama' => $menu->nama . ' (' . ($kasirs[$grup->first()->kasir_id] ?? 'Kasir') . ')',
                 'stok' => $stok,
                 'status' => $status,
             ];
         })
-            ->filter(fn ($item) => $item->status !== 'aman')
+            ->filter(fn ($item) => $item && $item->status !== 'aman')
             ->sortBy('stok')
             ->values();
 

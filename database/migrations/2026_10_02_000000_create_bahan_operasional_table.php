@@ -6,20 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Bahan Operasional = barang habis-pakai jangka panjang yang TIDAK ikut
-     * terjual per transaksi (minyak goreng, gas). Dipisah dari menu dan
-     * topping/bumbu supaya manajemen stoknya tidak campur aduk.
-     *
-     * Dua hal yang dicatat:
-     *  1. STOK CADANGAN (botol minyak / tabung gas yang belum dipakai) ->
-     *     tabel pergerakan_stok_bahan_operasional, pola sama dengan menu &
-     *     topping (SUM masuk - SUM keluar).
-     *  2. SIKLUS PAKAI (isi yang sedang dipakai sekarang) -> kolom di tabel
-     *     ini. Perkiraan habisnya dihitung dari "jam pemakaian" atau
-     *     "jumlah kali goreng", lalu kasir yang KONFIRMASI saat benar-benar
-     *     habis (tombol "Habis & Ganti Baru").
-     */
+  
     public function up(): void
     {
         Schema::create('bahan_operasional', function (Blueprint $table) {

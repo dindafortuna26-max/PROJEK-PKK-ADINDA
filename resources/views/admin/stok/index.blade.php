@@ -23,13 +23,15 @@
 @endphp
 
 @section('content')
-<div class="ap">
+{{-- Dimuat di sini (bukan di @push styles) supaya urutannya SETELAH cimol-final & cimol-premium. --}}
+<link rel="stylesheet" href="{{ asset('assets_dashboard/css/stok-rapi.css') }}?v={{ @filemtime(public_path('assets_dashboard/css/stok-rapi.css')) }}">
+<div class="ap stok-page">
 
   <!-- START: Page Header -->
   <div class="ap-hero">
     <div>
       <h1>Manajemen Stok</h1>
-      <p>Stok dipisah per kelompok: Menu, Topping &amp; Bumbu, dan Bahan Operasional (minyak goreng &amp; gas). Pilih tab di bawah.</p>
+      <p>Stok dipisah per kelompok: Menu, Topping &amp; Bumbu, dan Bahan Operasional (minyak goreng, gas, dan kemasan). Pilih tab di bawah.</p>
     </div>
   </div>
   <!-- END: Page Header -->
@@ -67,7 +69,13 @@
           <i class="bi bi-search table-search-icon"></i>
           <input type="text" name="cari" value="{{ request('cari') }}" class="table-search-input" placeholder="Cari nama barang...">
         </div>
-        @if (request('cari'))
+        <select name="kasir_id" class="form-select-custom" style="max-width: 220px;" onchange="this.form.submit()" title="Lihat stok per kasir">
+          <option value="">Semua kasir</option>
+          @foreach ($kasirs as $k)
+            <option value="{{ $k->id }}" {{ (string) request('kasir_id') === (string) $k->id ? 'selected' : '' }}>{{ $k->name }}</option>
+          @endforeach
+        </select>
+        @if (request('cari') || request('kasir_id'))
           <a href="{{ route('admin.stok.index') }}" class="btn-table-action">
             <i class="bi bi-x-lg"></i>
             <span>Reset</span>
@@ -89,11 +97,22 @@
       <div class="sm-head">
         <div class="sm-head-title">
           <span class="sm-head-ico"><i class="bi bi-box-seam-fill"></i></span>
-          <div><h3>Stok Menu</h3><p>Sisa stok berjalan setiap menu</p></div>
+          <div><h3>Stok Menu</h3><p>Sisa stok setiap menu, dipisah per kasir</p></div>
         </div>
-        <button type="button" class="btn-custom btn-custom-primary" data-bs-toggle="modal" data-bs-target="#modal-tambah-stok">
-          <i class="bi bi-plus-lg"></i><span>Tambah Stok Menu</span>
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+          <form action="{{ route('admin.stok.jatah-harian') }}" method="POST"
+            data-confirm="Bagikan jatah harian menu ke semua kasir aktif?"
+            data-confirm-text="Tiap kasir aktif dapat stok sesuai jatah harian tiap menu (atur lewat tombol Edit pada baris menu). Kasir yang hari ini sudah menerima stok menu itu dilewati."
+            data-confirm-yes="Ya, Bagikan">
+            @csrf
+            <button type="submit" class="btn-custom btn-custom-outline-secondary">
+              <i class="bi bi-calendar-check"></i><span>Bagikan Jatah Harian</span>
+            </button>
+          </form>
+          <button type="button" class="btn-custom btn-custom-primary" data-bs-toggle="modal" data-bs-target="#modal-tambah-stok">
+            <i class="bi bi-plus-lg"></i><span>Tambah Stok Menu</span>
+          </button>
+        </div>
       </div>
 
       <div class="sm-card">
@@ -103,6 +122,7 @@
               <tr>
                 <th class="sm-col-no">No</th>
                 <th>Menu</th>
+                <th>Kasir</th>
                 <th>Sisa Stok</th>
                 <th>Status</th>
                 <th>Stok Masuk Terakhir</th>
@@ -124,6 +144,13 @@
                     </div>
                   </td>
                   <td>
+                    @if ($item->kasir)
+                      <span class="sm-user"><i class="sm-av">{{ strtoupper(mb_substr($item->kasir->name, 0, 1)) }}</i>{{ $item->kasir->name }}</span>
+                    @else
+                      <span class="sm-muted">Belum dibagi</span>
+                    @endif
+                  </td>
+                  <td>
                     <div class="sm-stock">
                       <div class="sm-stock-num">{{ number_format($item->stok, 0, ',', '.') }}<small>porsi</small></div>
                       <div class="sm-meter {{ $tone }}"><i style="width: {{ $persenStok($item->stok, $item->menu->stok_minimum, $item->status) }}%"></i></div>
@@ -139,25 +166,30 @@
                     @endif
                   </td>
                   <td class="sm-col-act">
-                    <div class="sm-actions">
-                      <button type="button" class="sm-icon-btn" title="Edit stok" data-bs-toggle="modal" data-bs-target="#modal-koreksi-{{ $item->menu->id }}"><i class="bi bi-pencil-fill"></i></button>
-                      <form action="{{ route('admin.stok.hapus-riwayat', $item->menu) }}" method="POST"
-                        onsubmit="return confirm('Hapus semua riwayat stok &quot;{{ $item->menu->nama }}&quot;? Stoknya bakal balik ke 0 dan tidak bisa dibatalkan.')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="sm-icon-btn danger" title="Hapus semua riwayat stok"><i class="bi bi-trash3-fill"></i></button>
-                      </form>
-                    </div>
+                    @if ($item->kasir)
+                      <div class="sm-actions">
+                        <button type="button" class="sm-icon-btn" title="Edit stok {{ $item->kasir->name }}" data-bs-toggle="modal" data-bs-target="#modal-koreksi-{{ $item->menu->id }}-{{ $item->kasir->id }}"><i class="bi bi-pencil-fill"></i></button>
+                        <form action="{{ route('admin.stok.hapus-riwayat', $item->menu) }}" method="POST"
+                          onsubmit="return confirm('Hapus semua riwayat stok &quot;{{ $item->menu->nama }}&quot; milik {{ $item->kasir->name }}? Stoknya bakal balik ke 0 dan tidak bisa dibatalkan.')">
+                          @csrf
+                          @method('DELETE')
+                          <input type="hidden" name="kasir_id" value="{{ $item->kasir->id }}">
+                          <button type="submit" class="sm-icon-btn danger" title="Hapus semua riwayat stok kasir ini"><i class="bi bi-trash3-fill"></i></button>
+                        </form>
+                      </div>
+                    @else
+                      <span class="sm-muted">—</span>
+                    @endif
                   </td>
                 </tr>
               @empty
-                <tr><td colspan="6" class="sm-empty"><i class="bi bi-inbox"></i>Belum ada menu. Tambahkan menu dulu lewat halaman Master Menu.</td></tr>
+                <tr><td colspan="7" class="sm-empty"><i class="bi bi-inbox"></i>Belum ada menu. Tambahkan menu dulu lewat halaman Master Menu.</td></tr>
               @endforelse
             </tbody>
           </table>
         </div>
         <div class="sm-foot">
-          <span>Menampilkan {{ $dataStok->count() }} dari {{ $dataStok->total() }} menu</span>
+          <span>Menampilkan {{ $dataStok->count() }} dari {{ $dataStok->total() }} data stok</span>
           {{ $dataStok->links() }}
         </div>
       </div>
@@ -182,6 +214,7 @@
               <tr>
                 <th>Tanggal</th>
                 <th>Menu</th>
+                <th>Kasir</th>
                 <th>Jumlah</th>
                 <th>Keterangan</th>
                 <th>Diinput Oleh</th>
@@ -204,6 +237,7 @@
                       <div><b>{{ $riwayat->menu->nama ?? '-' }}</b></div>
                     </div>
                   </td>
+                  <td>{{ $riwayat->kasir->name ?? '—' }}</td>
                   <td>
                     <div class="sm-flow {{ $masuk ? 'in' : 'out' }}">
                       <span class="sm-flow-ico"><i class="bi {{ $masuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right' }}"></i></span>
@@ -231,7 +265,7 @@
                   </td>
                 </tr>
               @empty
-                <tr><td colspan="6" class="sm-empty"><i class="bi bi-clock-history"></i>Belum ada riwayat stok. Klik "Tambah Stok Menu" untuk mulai input.</td></tr>
+                <tr><td colspan="7" class="sm-empty"><i class="bi bi-clock-history"></i>Belum ada riwayat stok. Klik "Tambah Stok Menu" untuk mulai input.</td></tr>
               @endforelse
             </tbody>
           </table>
@@ -258,9 +292,20 @@
           <span class="sm-head-ico"><i class="bi bi-droplet-fill"></i></span>
           <div><h3>Stok Topping &amp; Bumbu</h3><p>Sisa stok saus dan bubuk tabur</p></div>
         </div>
-        <button type="button" class="btn-custom btn-custom-primary" data-bs-toggle="modal" data-bs-target="#modal-tambah-stok-topping">
-          <i class="bi bi-plus-lg"></i><span>Tambah Stok Topping/Bumbu</span>
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+          <form action="{{ route('admin.stok.topping.jatah-harian') }}" method="POST"
+            data-confirm="Bagikan jatah harian topping &amp; bumbu ke semua kasir aktif?"
+            data-confirm-text="Tiap kasir aktif dapat stok sesuai jatah harian tiap topping/bumbu (atur lewat tombol Edit pada baris). Kasir yang hari ini sudah menerima stok topping/bumbu itu dilewati."
+            data-confirm-yes="Ya, Bagikan">
+            @csrf
+            <button type="submit" class="btn-custom btn-custom-outline-secondary">
+              <i class="bi bi-calendar-check"></i><span>Bagikan Jatah Harian</span>
+            </button>
+          </form>
+          <button type="button" class="btn-custom btn-custom-primary" data-bs-toggle="modal" data-bs-target="#modal-tambah-stok-topping">
+            <i class="bi bi-plus-lg"></i><span>Tambah Stok Topping/Bumbu</span>
+          </button>
+        </div>
       </div>
 
       <div class="sm-card">
@@ -270,6 +315,7 @@
               <tr>
                 <th class="sm-col-no">No</th>
                 <th>Topping / Bumbu</th>
+                <th>Kasir</th>
                 <th>Sisa Stok</th>
                 <th>Status</th>
                 <th>Stok Masuk Terakhir</th>
@@ -291,6 +337,13 @@
                     </div>
                   </td>
                   <td>
+                    @if ($item->kasir)
+                      <span class="sm-user"><i class="sm-av">{{ strtoupper(mb_substr($item->kasir->name, 0, 1)) }}</i>{{ $item->kasir->name }}</span>
+                    @else
+                      <span class="sm-muted">Belum dibagi</span>
+                    @endif
+                  </td>
+                  <td>
                     <div class="sm-stock">
                       <div class="sm-stock-num">{{ number_format($item->stok, 0, ',', '.') }}<small>stok</small></div>
                       <div class="sm-meter {{ $tone }}"><i style="width: {{ $persenStok($item->stok, $item->topping->stok_minimum, $item->status) }}%"></i></div>
@@ -306,25 +359,30 @@
                     @endif
                   </td>
                   <td class="sm-col-act">
-                    <div class="sm-actions">
-                      <button type="button" class="sm-icon-btn" title="Edit stok" data-bs-toggle="modal" data-bs-target="#modal-koreksi-topping-{{ $item->topping->id }}"><i class="bi bi-pencil-fill"></i></button>
-                      <form action="{{ route('admin.stok.topping.hapus-riwayat', $item->topping) }}" method="POST"
-                        onsubmit="return confirm('Hapus semua riwayat stok &quot;{{ $item->topping->nama }}&quot;? Stoknya bakal balik ke 0 dan tidak bisa dibatalkan.')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="sm-icon-btn danger" title="Hapus semua riwayat stok"><i class="bi bi-trash3-fill"></i></button>
-                      </form>
-                    </div>
+                    @if ($item->kasir)
+                      <div class="sm-actions">
+                        <button type="button" class="sm-icon-btn" title="Edit stok {{ $item->kasir->name }}" data-bs-toggle="modal" data-bs-target="#modal-koreksi-topping-{{ $item->topping->id }}-{{ $item->kasir->id }}"><i class="bi bi-pencil-fill"></i></button>
+                        <form action="{{ route('admin.stok.topping.hapus-riwayat', $item->topping) }}" method="POST"
+                          onsubmit="return confirm('Hapus semua riwayat stok &quot;{{ $item->topping->nama }}&quot; milik {{ $item->kasir->name }}? Stoknya bakal balik ke 0 dan tidak bisa dibatalkan.')">
+                          @csrf
+                          @method('DELETE')
+                          <input type="hidden" name="kasir_id" value="{{ $item->kasir->id }}">
+                          <button type="submit" class="sm-icon-btn danger" title="Hapus semua riwayat stok kasir ini"><i class="bi bi-trash3-fill"></i></button>
+                        </form>
+                      </div>
+                    @else
+                      <span class="sm-muted">—</span>
+                    @endif
                   </td>
                 </tr>
               @empty
-                <tr><td colspan="6" class="sm-empty"><i class="bi bi-inbox"></i>Belum ada saus/bubuk tabur. Tambahkan dulu lewat halaman Master Topping &amp; Bumbu.</td></tr>
+                <tr><td colspan="7" class="sm-empty"><i class="bi bi-inbox"></i>Belum ada saus/bubuk tabur. Tambahkan dulu lewat halaman Master Topping &amp; Bumbu.</td></tr>
               @endforelse
             </tbody>
           </table>
         </div>
         <div class="sm-foot">
-          <span>Menampilkan {{ $dataStokTopping->count() }} dari {{ $dataStokTopping->total() }} item</span>
+          <span>Menampilkan {{ $dataStokTopping->count() }} dari {{ $dataStokTopping->total() }} data stok</span>
           {{ $dataStokTopping->links() }}
         </div>
       </div>
@@ -349,6 +407,7 @@
               <tr>
                 <th>Tanggal</th>
                 <th>Topping / Bumbu</th>
+                <th>Kasir</th>
                 <th>Jumlah</th>
                 <th>Keterangan</th>
                 <th>Diinput Oleh</th>
@@ -371,6 +430,7 @@
                       <div><b>{{ $riwayat->topping->nama ?? '-' }}</b></div>
                     </div>
                   </td>
+                  <td>{{ $riwayat->kasir->name ?? '—' }}</td>
                   <td>
                     <div class="sm-flow {{ $masuk ? 'in' : 'out' }}">
                       <span class="sm-flow-ico"><i class="bi {{ $masuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right' }}"></i></span>
@@ -398,7 +458,7 @@
                   </td>
                 </tr>
               @empty
-                <tr><td colspan="6" class="sm-empty"><i class="bi bi-clock-history"></i>Belum ada riwayat stok topping/bumbu.</td></tr>
+                <tr><td colspan="7" class="sm-empty"><i class="bi bi-clock-history"></i>Belum ada riwayat stok topping/bumbu.</td></tr>
               @endforelse
             </tbody>
           </table>
@@ -416,34 +476,46 @@
 
       @include('admin.stok._ringkasan', [
           'r' => $ringkasan['bahan'],
-          'labelTotal' => 'Total Bahan Operasional',
-          'satuanTotal' => 'bahan',
-          'satuanHabis' => 'bahan',
+          'labelTotal' => 'Total Jatah Kasir',
+          'satuanTotal' => 'bahan × kasir',
+          'labelAman' => 'Masih Ada',
+          'labelMenipis' => 'Minta Tambahan',
+          'iconMenipis' => 'bi-hand-index-thumb-fill',
+          'satuanMenipis' => 'permintaan kasir',
+          'satuanHabis' => 'bahan × kasir',
       ])
-
-      <div class="bo-info">
-        <i class="bi bi-info-circle-fill"></i>
-        <div>
-          <b>Stok berkurang otomatis tiap transaksi</b>
-          <p>
-            Isi stok dalam liter (minyak) atau tabung (gas), 1 sampai {{ \App\Models\BahanOperasional::MAKS_SEKALI_MASUK }} per input.
-            1 liter minyak = 10 sesi goreng, 1 tabung gas 3 kg = 20 sesi (1 sesi = 1 transaksi). Setiap transaksi selesai,
-            sisa sesi berkurang 1 tanpa perlu konfirmasi kasir. Saat menipis atau habis, kamu dapat notifikasi di lonceng.
-          </p>
-        </div>
-      </div>
 
       <div class="sm-head">
         <div class="sm-head-title">
-          <span class="sm-head-ico"><i class="bi bi-fire"></i></span>
-          <div><h3>Stok Bahan Operasional</h3><p>Minyak goreng &amp; gas, dihitung dalam sesi goreng</p></div>
+          <span class="sm-head-ico"><i class="bi bi-box-seam"></i></span>
+          <div><h3>Jatah Bahan &amp; Kemasan per Kasir</h3><p>Liter (minyak), tabung (gas), dan pcs (kemasan), diberikan oleh admin</p></div>
         </div>
         <div class="d-flex flex-wrap gap-2">
           <a href="{{ route('admin.bahan-operasional.index') }}" class="btn-custom btn-custom-outline-secondary">
             <i class="bi bi-gear"></i><span>Atur Master Bahan</span>
           </a>
+          <form action="{{ route('admin.stok.bahan.jatah-harian') }}" method="POST"
+            data-confirm="Bagikan jatah harian KEMASAN ke semua kasir aktif?"
+            data-confirm-text="Tiap kasir aktif dapat kemasan sesuai angka di Master Bahan. Kasir yang hari ini sudah menerima kemasan itu dilewati."
+            data-confirm-yes="Ya, Bagikan">
+            @csrf
+            <input type="hidden" name="jenis" value="kemasan">
+            <button type="submit" class="btn-custom btn-custom-outline-secondary">
+              <i class="bi bi-calendar-check"></i><span>Bagikan Jatah Kemasan</span>
+            </button>
+          </form>
+          <form action="{{ route('admin.stok.bahan.jatah-harian') }}" method="POST"
+            data-confirm="Bagikan jatah harian minyak &amp; gas ke semua kasir aktif?"
+            data-confirm-text="Tiap kasir aktif dapat jatah sesuai angka di Master Bahan. Kasir yang hari ini sudah menerima bahan itu dilewati."
+            data-confirm-yes="Ya, Bagikan">
+            @csrf
+            <input type="hidden" name="jenis" value="habis_pakai">
+            <button type="submit" class="btn-custom btn-custom-outline-secondary">
+              <i class="bi bi-calendar-check"></i><span>Bagikan Jatah Minyak &amp; Gas</span>
+            </button>
+          </form>
           <button type="button" class="btn-custom btn-custom-primary" data-bs-toggle="modal" data-bs-target="#modal-tambah-stok-bahan">
-            <i class="bi bi-plus-lg"></i><span>Tambah Stok Bahan</span>
+            <i class="bi bi-plus-lg"></i><span>Beri Jatah</span>
           </button>
         </div>
       </div>
@@ -455,10 +527,10 @@
               <tr>
                 <th class="sm-col-no">No</th>
                 <th>Bahan</th>
+                <th>Kasir</th>
                 <th>Sisa Stok</th>
-                <th>Sisa Sesi Goreng</th>
                 <th>Status</th>
-                <th>Stok Masuk Terakhir</th>
+                <th>Diberi Terakhir</th>
                 <th class="sm-col-act">Aksi</th>
               </tr>
             </thead>
@@ -466,6 +538,7 @@
               @forelse ($dataStokBahan as $index => $item)
                 @php
                   $b = $item->bahan;
+                  $k = $item->kasir;
                   $tone = $statusTone[$item->status];
                 @endphp
                 <tr>
@@ -475,52 +548,66 @@
                       @include('partials.thumb', ['src' => $b->gambar_url, 'icon' => $b->ikon, 'size' => 46, 'alt' => $b->nama])
                       <div>
                         <b>{{ $b->nama }}</b>
-                        <span>1 {{ $b->satuan }} = {{ $b->sesi_per_satuan }} sesi @unless ($b->is_active) · <i class="sm-tag off">Nonaktif</i> @endunless</span>
+                        <span>
+                          @if ($b->is_kemasan) <i class="sm-tag auto">Kemasan</i> {{ $b->aturan_pakai }} ·
+                          @endif
+                          @if ($b->jatah_harian > 0) Jatah harian {{ $b->labelJumlah($b->jatah_harian) }} @else Tanpa jatah tetap @endif
+                          @unless ($b->is_active) · <i class="sm-tag off">Nonaktif</i> @endunless
+                        </span>
                       </div>
                     </div>
                   </td>
+                  <td><span class="sm-user"><i class="sm-av">{{ strtoupper(mb_substr($k->name, 0, 1)) }}</i>{{ $k->name }}</span></td>
                   <td>
                     @if ($item->status === 'belum_dikelola')
-                      <span class="sm-muted">Belum ada stok</span>
+                      <span class="sm-muted">Belum diberi</span>
                     @else
-                      <div class="sm-stock-num">{{ $b->labelStok() }}</div>
+                      <div class="sm-stock-num sm-stock-ringan">{{ number_format($item->stok, 0, ',', '.') }}<small>{{ $b->satuan }}</small></div>
                     @endif
                   </td>
-                  <td style="min-width: 190px;">
-                    @if ($item->status === 'belum_dikelola')
-                      <span class="sm-muted">-</span>
-                    @else
-                      <div class="sm-stock">
-                        <div class="sm-stock-num sm-stock-num-sm">{{ number_format($item->stok, 0, ',', '.') }}<small>sesi</small></div>
-                        <div class="sm-meter {{ $tone }}"><i style="width: {{ $b->persen_berjalan }}%"></i></div>
-                        <span class="sm-stock-min">{{ $b->sesi_berjalan }}/{{ $b->sesi_per_satuan }} sesi pada {{ $b->satuan }} berjalan</span>
-                      </div>
+                  <td>
+                    <span class="sm-pill {{ $tone }}">{{ \App\Models\BahanOperasional::labelStatus($item->status) }}</span>
+                    @if ($item->permintaan)
+                      <span class="sm-tag auto" title="Kasir minta tambahan sejak {{ $item->permintaan->created_at->translatedFormat('d M H:i') }}">Minta tambahan</span>
+                    @endif
+                    @if ($item->menunggu_terima->isNotEmpty())
+                      @php $kirimanBelum = $item->menunggu_terima->contains(fn ($p) => $p->belum_pada !== null); @endphp
+                      <span class="sm-tag auto" title="{{ $b->labelJumlah((int) $item->menunggu_terima->sum('jumlah')) }} sudah dikirim, stok kasir terisi setelah kasir konfirmasi Sudah">
+                        {{ $kirimanBelum ? 'Kasir: belum menerima' : 'Menunggu konfirmasi kasir' }}
+                      </span>
                     @endif
                   </td>
-                  <td><span class="sm-pill {{ $tone }}">{{ \App\Models\BahanOperasional::labelStatus($item->status) }}</span></td>
                   <td>
                     @if ($item->terakhir_masuk)
-                      <div class="sm-last"><b>{{ $item->terakhir_masuk->tanggal->translatedFormat('d M Y') }}</b><span class="sm-in">+{{ $item->terakhir_masuk->jumlah ?: $item->terakhir_masuk->sesi }} {{ $item->terakhir_masuk->jumlah ? $b->satuan : 'sesi' }}</span></div>
+                      <div class="sm-last"><b>{{ $item->terakhir_masuk->tanggal->translatedFormat('d M Y') }}</b><span class="sm-in">+{{ $b->labelJumlah($item->terakhir_masuk->jumlah) }}</span></div>
                     @else
                       <span class="sm-muted">Belum ada</span>
                     @endif
                   </td>
                   <td class="sm-col-act">
                     <div class="sm-actions">
-                      <button type="button" class="sm-icon-btn" title="Edit stok" data-bs-toggle="modal" data-bs-target="#modal-koreksi-bahan-{{ $b->id }}"><i class="bi bi-pencil-fill"></i></button>
+                      @if ($b->is_active && ! $b->is_kemasan)
+                        <button type="button" class="btn-custom btn-custom-sm btn-custom-primary" title="Beri jatah ke {{ $k->name }}"
+                          data-bs-toggle="modal" data-bs-target="#modal-tambah-stok-bahan"
+                          data-beri-bahan="{{ $b->id }}" data-beri-kasir="{{ $k->id }}">
+                          <i class="bi bi-plus-lg"></i><span>Beri</span>
+                        </button>
+                      @endif
+                      <button type="button" class="sm-icon-btn" title="Edit stok {{ $k->name }}" data-bs-toggle="modal" data-bs-target="#modal-koreksi-bahan-{{ $b->id }}-{{ $k->id }}"><i class="bi bi-pencil-fill"></i></button>
                       <form action="{{ route('admin.stok.bahan.hapus-riwayat', $b) }}" method="POST"
-                        data-confirm="Hapus semua riwayat stok &quot;{{ $b->nama }}&quot;?"
-                        data-confirm-text="Sisa stoknya balik ke 0 dan tidak bisa dibatalkan."
+                        data-confirm="Hapus semua riwayat &quot;{{ $b->nama }}&quot; milik {{ $k->name }}?"
+                        data-confirm-text="Stoknya balik ke 0 dan tidak bisa dibatalkan."
                         data-confirm-yes="Ya, Hapus">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="sm-icon-btn danger" title="Hapus semua riwayat stok"><i class="bi bi-trash3-fill"></i></button>
+                        <input type="hidden" name="kasir_id" value="{{ $k->id }}">
+                        <button type="submit" class="sm-icon-btn danger" title="Hapus semua riwayat kasir ini"><i class="bi bi-trash3-fill"></i></button>
                       </form>
                     </div>
                   </td>
                 </tr>
               @empty
-                <tr><td colspan="7" class="sm-empty"><i class="bi bi-fire"></i>Belum ada bahan operasional. Tambahkan dulu lewat menu Master → Bahan Operasional.</td></tr>
+                <tr><td colspan="7" class="sm-empty"><i class="bi bi-fire"></i>Belum ada bahan operasional atau kasir aktif. Tambahkan dulu lewat Master → Bahan Operasional dan Data Kasir.</td></tr>
               @endforelse
             </tbody>
           </table>
@@ -530,7 +617,7 @@
       <div class="sm-head sm-head-sub">
         <div class="sm-head-title">
           <span class="sm-head-ico"><i class="bi bi-arrow-left-right"></i></span>
-          <div><h3>Riwayat Stok Masuk &amp; Keluar</h3><p>Restock dari admin dan pemakaian otomatis tiap transaksi</p></div>
+          <div><h3>Riwayat Pemberian &amp; Laporan Habis</h3><p>Jatah dari admin (masuk) dan laporan habis dari kasir (keluar)</p></div>
         </div>
         <div class="sm-seg" role="group" aria-label="Filter riwayat bahan">
           @foreach (['' => 'Semua', 'masuk' => 'Masuk', 'keluar' => 'Keluar'] as $kunci => $teks)
@@ -547,6 +634,7 @@
               <tr>
                 <th>Tanggal</th>
                 <th>Bahan</th>
+                <th>Kasir</th>
                 <th>Jumlah</th>
                 <th>Keterangan</th>
                 <th>Dicatat Oleh</th>
@@ -555,8 +643,8 @@
             </thead>
             <tbody>
               @forelse ($riwayatBahan as $riwayat)
-                @php $masuk = $riwayat->jenis === 'masuk'; $otomatis = ! $masuk && $riwayat->transaksi_id; @endphp
-                <tr class="{{ $otomatis ? 'sm-row-auto' : '' }}">
+                @php $masuk = $riwayat->jenis === 'masuk'; @endphp
+                <tr>
                   <td>
                     <div class="sm-date"><b>{{ $riwayat->tanggal->translatedFormat('d') }}</b><span>{{ $riwayat->tanggal->translatedFormat('M Y') }}</span></div>
                   </td>
@@ -566,12 +654,13 @@
                       <div><b>{{ $riwayat->bahan->nama ?? '-' }}</b></div>
                     </div>
                   </td>
+                  <td>{{ $riwayat->kasir->name ?? '—' }}</td>
                   <td>
                     <div class="sm-flow {{ $masuk ? 'in' : 'out' }}">
                       <span class="sm-flow-ico"><i class="bi {{ $masuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right' }}"></i></span>
                       <div>
-                        <b>{{ $masuk ? '+' : '−' }}{{ number_format($riwayat->sesi, 0, ',', '.') }} sesi</b>
-                        <small>{{ $masuk ? 'Masuk' : 'Keluar' }}@if ($riwayat->jumlah > 0) · {{ $riwayat->jumlah }} {{ $riwayat->bahan->satuan ?? '' }}@endif</small>
+                        <b>{{ $masuk ? '+' : '−' }}{{ number_format($riwayat->jumlah, 0, ',', '.') }} {{ $riwayat->bahan->satuan ?? '' }}</b>
+                        <small>{{ $masuk ? 'Masuk' : 'Keluar' }}</small>
                       </div>
                     </div>
                   </td>
@@ -581,8 +670,8 @@
                     @if ($masuk)
                       <div class="sm-actions">
                         <form action="{{ route('admin.stok.bahan.hapus-entri-masuk', $riwayat) }}" method="POST"
-                          data-confirm="Hapus entri stok masuk ini?"
-                          data-confirm-text="Sisa stok bahannya ikut berkurang sesuai jumlah di atas."
+                          data-confirm="Hapus entri pemberian ini?"
+                          data-confirm-text="Sisa stok kasirnya ikut berkurang sesuai jumlah di atas."
                           data-confirm-yes="Ya, Hapus">
                           @csrf
                           @method('DELETE')
@@ -590,12 +679,12 @@
                         </form>
                       </div>
                     @else
-                      <span class="sm-tag {{ $otomatis ? 'auto' : 'off' }}">{{ $otomatis ? 'Otomatis' : 'Koreksi' }}</span>
+                      <span class="sm-tag {{ $riwayat->transaksi_id ? 'auto' : 'off' }}">{{ $riwayat->transaksi_id ? 'Otomatis' : (str_contains((string) $riwayat->keterangan, 'kasir') ? 'Lapor habis' : 'Koreksi') }}</span>
                     @endif
                   </td>
                 </tr>
               @empty
-                <tr><td colspan="6" class="sm-empty"><i class="bi bi-clock-history"></i>Belum ada riwayat bahan operasional.</td></tr>
+                <tr><td colspan="7" class="sm-empty"><i class="bi bi-clock-history"></i>Belum ada riwayat bahan operasional.</td></tr>
               @endforelse
             </tbody>
           </table>
@@ -626,6 +715,20 @@
           </div>
 
           <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label-custom">Untuk Kasir</label>
+              <select name="kasir_id" class="form-select-custom w-100 {{ $errors->has('kasir_id') ? 'is-invalid-custom' : '' }}">
+                <option value="">Pilih kasir...</option>
+                @foreach ($kasirAktif as $k)
+                  <option value="{{ $k->id }}" {{ (string) old('kasir_id') === (string) $k->id ? 'selected' : '' }}>{{ $k->name }}</option>
+                @endforeach
+              </select>
+              @error('kasir_id')
+                <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
+              @enderror
+              <span class="form-feedback-custom">Stok ini hanya bisa dipakai oleh kasir yang dipilih.</span>
+            </div>
+
             <div class="mb-3">
               <label class="form-label-custom">Nama Barang</label>
               <select name="menu_id" class="form-select-custom w-100 {{ $errors->has('menu_id') ? 'is-invalid-custom' : '' }}"
@@ -704,21 +807,22 @@
     </div>
   </div>
 
-  @foreach ($dataStok as $item)
+  @foreach ($dataStok->getCollection()->filter(fn ($i) => $i->kasir) as $item)
     <!-- ===================== MODAL: KOREKSI STOK ===================== -->
-    <div class="modal fade" id="modal-koreksi-{{ $item->menu->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modal-koreksi-{{ $item->menu->id }}-{{ $item->kasir->id }}" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <form action="{{ route('admin.stok.koreksi', $item->menu) }}" method="POST">
             @csrf
             @method('PATCH')
-            <input type="hidden" name="_action" value="koreksi-{{ $item->menu->id }}">
+            <input type="hidden" name="_action" value="koreksi-{{ $item->menu->id }}-{{ $item->kasir->id }}">
+            <input type="hidden" name="kasir_id" value="{{ $item->kasir->id }}">
 
             <div class="modal-header modal-header-brand">
               @include('partials.thumb', ['src' => $item->menu->gambar ? asset('storage/' . $item->menu->gambar) : null, 'icon' => 'bi-box-seam-fill', 'size' => 48, 'alt' => $item->menu->nama])
               <div>
                 <h5 class="modal-title mb-0">Edit Stok — {{ $item->menu->nama }}</h5>
-                <small class="modal-subtitle">Stok sekarang {{ number_format($item->stok, 0, ',', '.') }}</small>
+                <small class="modal-subtitle">Kasir {{ $item->kasir->name }} · stok sekarang {{ number_format($item->stok, 0, ',', '.') }}</small>
               </div>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -749,6 +853,19 @@
                 <span class="form-feedback-custom">Kalau stok turun sampai batas ini, statusnya jadi "Menipis".</span>
                 @if (old('_action') === 'koreksi-' . $item->menu->id)
                   @error('stok_minimum')
+                    <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
+                  @enderror
+                @endif
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label-custom">Jatah Harian per Kasir</label>
+                <input type="number" name="jatah_harian" min="0" max="10000"
+                  value="{{ old('_action') === 'koreksi-' . $item->menu->id . '-' . $item->kasir->id ? old('jatah_harian') : (int) $item->menu->jatah_harian }}"
+                  class="form-control-custom {{ old('_action') === 'koreksi-' . $item->menu->id . '-' . $item->kasir->id && $errors->has('jatah_harian') ? 'is-invalid-custom' : '' }}">
+                <span class="form-feedback-custom">Dipakai tombol "Bagikan Jatah Harian" (porsi per kasir per hari). Isi 0 kalau tidak ada jatah tetap. Berlaku untuk menu ini di semua kasir.</span>
+                @if (old('_action') === 'koreksi-' . $item->menu->id . '-' . $item->kasir->id)
+                  @error('jatah_harian')
                     <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
                   @enderror
                 @endif
@@ -791,6 +908,20 @@
           </div>
 
           <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label-custom">Untuk Kasir</label>
+              <select name="kasir_id" class="form-select-custom w-100 {{ $errors->has('kasir_id') ? 'is-invalid-custom' : '' }}">
+                <option value="">Pilih kasir...</option>
+                @foreach ($kasirAktif as $k)
+                  <option value="{{ $k->id }}" {{ (string) old('kasir_id') === (string) $k->id ? 'selected' : '' }}>{{ $k->name }}</option>
+                @endforeach
+              </select>
+              @error('kasir_id')
+                <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
+              @enderror
+              <span class="form-feedback-custom">Stok ini hanya bisa dipakai oleh kasir yang dipilih.</span>
+            </div>
+
             <div class="mb-3">
               <label class="form-label-custom">Bumbu / Topping</label>
               <select name="topping_id" class="form-select-custom w-100 {{ $errors->has('topping_id') ? 'is-invalid-custom' : '' }}"
@@ -881,21 +1012,22 @@
     </div>
   </div>
 
-  @foreach ($dataStokTopping as $item)
+  @foreach ($dataStokTopping->getCollection()->filter(fn ($i) => $i->kasir) as $item)
     <!-- ===================== MODAL: KOREKSI STOK TOPPING ===================== -->
-    <div class="modal fade" id="modal-koreksi-topping-{{ $item->topping->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modal-koreksi-topping-{{ $item->topping->id }}-{{ $item->kasir->id }}" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <form action="{{ route('admin.stok.topping.koreksi', $item->topping) }}" method="POST">
             @csrf
             @method('PATCH')
-            <input type="hidden" name="_action" value="koreksi-topping-{{ $item->topping->id }}">
+            <input type="hidden" name="_action" value="koreksi-topping-{{ $item->topping->id }}-{{ $item->kasir->id }}">
+            <input type="hidden" name="kasir_id" value="{{ $item->kasir->id }}">
 
             <div class="modal-header modal-header-brand">
               @include('partials.thumb', ['src' => $item->topping->gambar_url, 'icon' => 'bi-droplet-fill', 'size' => 48, 'alt' => $item->topping->nama])
               <div>
                 <h5 class="modal-title mb-0">Edit Stok — {{ $item->topping->nama }}</h5>
-                <small class="modal-subtitle">{{ $item->topping->jenis_label }} · stok sekarang {{ number_format($item->stok, 0, ',', '.') }}</small>
+                <small class="modal-subtitle">{{ $item->topping->jenis_label }} · Kasir {{ $item->kasir->name }} · stok sekarang {{ number_format($item->stok, 0, ',', '.') }}</small>
               </div>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -931,6 +1063,19 @@
                 @endif
               </div>
 
+              <div class="mb-3">
+                <label class="form-label-custom">Jatah Harian per Kasir</label>
+                <input type="number" name="jatah_harian" min="0" max="10000"
+                  value="{{ old('_action') === 'koreksi-topping-' . $item->topping->id . '-' . $item->kasir->id ? old('jatah_harian') : (int) $item->topping->jatah_harian }}"
+                  class="form-control-custom {{ old('_action') === 'koreksi-topping-' . $item->topping->id . '-' . $item->kasir->id && $errors->has('jatah_harian') ? 'is-invalid-custom' : '' }}">
+                <span class="form-feedback-custom">Dipakai tombol "Bagikan Jatah Harian" (stok per kasir per hari). Isi 0 kalau tidak ada jatah tetap. Berlaku untuk item ini di semua kasir.</span>
+                @if (old('_action') === 'koreksi-topping-' . $item->topping->id . '-' . $item->kasir->id)
+                  @error('jatah_harian')
+                    <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
+                  @enderror
+                @endif
+              </div>
+
               <div class="mb-1">
                 <label class="form-label-custom">Keterangan (opsional)</label>
                 <input type="text" name="keterangan" class="form-control-custom" placeholder="contoh: Koreksi setelah stok opname">
@@ -950,7 +1095,7 @@
     </div>
   @endforeach
 
-  <!-- ===================== MODAL: TAMBAH STOK BAHAN OPERASIONAL ===================== -->
+  <!-- ===================== MODAL: BERI JATAH BAHAN OPERASIONAL ===================== -->
   <div class="modal fade" id="modal-tambah-stok-bahan" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -959,26 +1104,42 @@
           <input type="hidden" name="_action" value="tambah-stok-bahan">
 
           <div class="modal-header modal-header-brand">
-            <div class="modal-header-icon"><i class="bi bi-fire"></i></div>
+            <div class="modal-header-icon"><i class="bi bi-box-seam"></i></div>
             <div>
-              <h5 class="modal-title mb-0">Tambah Stok Bahan Operasional</h5>
-              <small class="modal-subtitle">Catat minyak (liter) / gas (tabung) yang baru dibeli.</small>
+              <h5 class="modal-title mb-0">Beri Jatah Bahan Operasional</h5>
+              <small class="modal-subtitle">Minyak (liter) atau gas (tabung) untuk satu kasir.</small>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
 
           <div class="modal-body">
             <div class="mb-3">
+              <label class="form-label-custom">Untuk Kasir</label>
+              <select name="kasir_id" class="form-select-custom w-100 {{ $errors->has('kasir_id') ? 'is-invalid-custom' : '' }}">
+                <option value="">Pilih kasir...</option>
+                @foreach ($kasirAktif as $k)
+                  <option value="{{ $k->id }}" {{ (string) old('kasir_id') === (string) $k->id ? 'selected' : '' }}>{{ $k->name }}</option>
+                @endforeach
+              </select>
+              @error('kasir_id')
+                <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
+              @enderror
+            </div>
+
+            <div class="mb-3">
               <label class="form-label-custom">Bahan</label>
               <select name="bahan_operasional_id" class="form-select-custom w-100 {{ $errors->has('bahan_operasional_id') ? 'is-invalid-custom' : '' }}"
                 data-preview-target="#preview-stok-bahan">
                 <option value="">Pilih bahan...</option>
-                @foreach ($bahanAktif as $bahan)
+                @foreach ($bahanAktif->reject(fn ($bhn) => $bhn->is_kemasan) as $bahan)
                   <option value="{{ $bahan->id }}"
                     data-foto="{{ $bahan->gambar_url }}"
-                    data-sub="1 {{ $bahan->satuan }} = {{ $bahan->sesi_per_satuan }} sesi goreng"
+                    data-sub="{{ $bahan->label_jenis }} · Satuan: {{ $bahan->satuan }}{{ $bahan->jatah_harian > 0 ? ' · jatah harian ' . $bahan->jatah_harian : '' }}"
+                    data-jatah="{{ $bahan->jatah_harian }}"
+                    data-satuan="{{ $bahan->satuan }}"
+                    data-maks="{{ $bahan->maksSekaliMasuk() }}"
                     {{ (string) old('bahan_operasional_id') === (string) $bahan->id ? 'selected' : '' }}>
-                    {{ $bahan->nama }} ({{ $bahan->satuan }} = {{ $bahan->sesi_per_satuan }} sesi goreng)
+                    {{ $bahan->nama }} ({{ $bahan->satuan }}){{ $bahan->is_kemasan ? ' · Kemasan' . ($bahan->ukuran ? ' ' . $bahan->ukuran->nama : '') : '' }}
                   </option>
                 @endforeach
               </select>
@@ -998,7 +1159,7 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label-custom">Jumlah Masuk</label>
+              <label class="form-label-custom">Jumlah <span id="bahan-satuan" class="bo-opsional"></span></label>
               <div class="qty-wrap" data-bahan-qty>
                 <div class="qty-step">
                   <button type="button" data-bahan-ubah="-1" aria-label="Kurangi"><i class="bi bi-dash-lg"></i></button>
@@ -1007,12 +1168,8 @@
                   <button type="button" data-bahan-ubah="1" aria-label="Tambah"><i class="bi bi-plus-lg"></i></button>
                 </div>
               </div>
-              <div class="qty-chips" data-bahan-chips>
-                @for ($n = 1; $n <= \App\Models\BahanOperasional::MAKS_SEKALI_MASUK; $n++)
-                  <button type="button" data-bahan-set="{{ $n }}">{{ $n }}</button>
-                @endfor
-              </div>
-              <span class="form-feedback-custom">Pilih 1 sampai {{ \App\Models\BahanOperasional::MAKS_SEKALI_MASUK }} liter/tabung. <span id="bahan-konversi"></span></span>
+              <span class="form-feedback-custom">Terisi otomatis sesuai jatah harian bahan yang dipilih, tapi bisa kamu ubah.</span>
+              <span class="form-feedback-custom">Khusus minyak &amp; gas: stok kasir baru terisi setelah kasir konfirmasi &quot;Sudah&quot; menerimanya di Cek Stok.</span>
               @error('jumlah')
                 <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
               @enderror
@@ -1030,7 +1187,7 @@
             <div class="mb-1">
               <label class="form-label-custom">Keterangan (opsional)</label>
               <input type="text" name="keterangan" value="{{ old('keterangan') }}"
-                class="form-control-custom" placeholder="contoh: Beli di warung / agen gas">
+                class="form-control-custom" placeholder="contoh: Jatah tambahan karena ramai">
             </div>
           </div>
 
@@ -1044,51 +1201,43 @@
   </div>
 
   @foreach ($dataStokBahan as $item)
+    @php
+      $mb = $item->bahan;
+      $mk = $item->kasir;
+      $idKoreksi = 'koreksi-bahan-' . $mb->id . '-' . $mk->id;
+      $pakaiOldKoreksi = old('_action') === $idKoreksi;
+    @endphp
     <!-- ===================== MODAL: KOREKSI STOK BAHAN ===================== -->
-    <div class="modal fade" id="modal-koreksi-bahan-{{ $item->bahan->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modal-{{ $idKoreksi }}" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <form action="{{ route('admin.stok.bahan.koreksi', $item->bahan) }}" method="POST">
+          <form action="{{ route('admin.stok.bahan.koreksi', $mb) }}" method="POST">
             @csrf
             @method('PATCH')
-            <input type="hidden" name="_action" value="koreksi-bahan-{{ $item->bahan->id }}">
+            <input type="hidden" name="_action" value="{{ $idKoreksi }}">
+            <input type="hidden" name="kasir_id" value="{{ $mk->id }}">
 
             <div class="modal-header modal-header-brand">
-              @include('partials.thumb', ['src' => $item->bahan->gambar_url, 'icon' => $item->bahan->ikon, 'size' => 48, 'alt' => $item->bahan->nama])
+              @include('partials.thumb', ['src' => $mb->gambar_url, 'icon' => $mb->ikon, 'size' => 48, 'alt' => $mb->nama])
               <div>
-                <h5 class="modal-title mb-0">Edit Stok — {{ $item->bahan->nama }}</h5>
-                <small class="modal-subtitle">Sisa sekarang {{ $item->bahan->labelStok() }} ({{ number_format($item->stok, 0, ',', '.') }} sesi goreng)</small>
+                <h5 class="modal-title mb-0">Edit Stok — {{ $mb->nama }}</h5>
+                <small class="modal-subtitle">Milik {{ $mk->name }} · sisa sekarang {{ $mb->labelJumlah($item->stok) }}</small>
               </div>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <div class="modal-body">
               <p class="table-user-sub">
-                Sisa saat ini: <strong>{{ $item->stok }}</strong> sesi goreng ({{ $item->bahan->labelStok() }}).
-                Isi angka yang benar di bawah ini, selisihnya otomatis tercatat di riwayat.
-                1 {{ $item->bahan->satuan }} = {{ $item->bahan->sesi_per_satuan }} sesi.
+                Isi sisa yang benar di bawah ini, selisihnya otomatis tercatat di riwayat.
               </p>
 
               <div class="mb-3">
-                <label class="form-label-custom">Sisa Sesi Goreng Baru</label>
-                <input type="number" name="sesi_baru" min="0"
-                  value="{{ old('_action') === 'koreksi-bahan-' . $item->bahan->id ? old('sesi_baru') : $item->stok }}"
-                  class="form-control-custom {{ old('_action') === 'koreksi-bahan-' . $item->bahan->id && $errors->has('sesi_baru') ? 'is-invalid-custom' : '' }}">
-                @if (old('_action') === 'koreksi-bahan-' . $item->bahan->id)
-                  @error('sesi_baru')
-                    <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
-                  @enderror
-                @endif
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label-custom">Batas Menipis (sesi)</label>
-                <input type="number" name="stok_minimum" min="0"
-                  value="{{ old('_action') === 'koreksi-bahan-' . $item->bahan->id ? old('stok_minimum') : $item->bahan->stok_minimum }}"
-                  class="form-control-custom {{ old('_action') === 'koreksi-bahan-' . $item->bahan->id && $errors->has('stok_minimum') ? 'is-invalid-custom' : '' }}">
-                <span class="form-feedback-custom">Kalau sisa sesi turun sampai batas ini, statusnya jadi "Menipis" dan muncul di notifikasi.</span>
-                @if (old('_action') === 'koreksi-bahan-' . $item->bahan->id)
-                  @error('stok_minimum')
+                <label class="form-label-custom">Sisa Stok Baru ({{ $mb->satuan }})</label>
+                <input type="number" name="stok_baru" min="0"
+                  value="{{ $pakaiOldKoreksi ? old('stok_baru') : $item->stok }}"
+                  class="form-control-custom {{ $pakaiOldKoreksi && $errors->has('stok_baru') ? 'is-invalid-custom' : '' }}">
+                @if ($pakaiOldKoreksi)
+                  @error('stok_baru')
                     <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
                   @enderror
                 @endif
@@ -1133,32 +1282,62 @@
         });
       }
     });
-    // Modal Tambah Stok Bahan: pilih 1-5 liter/tabung + hitung setara berapa sesi goreng.
-    document.querySelectorAll('[data-bahan-qty]').forEach(function (wrap) {
-      var form = wrap.closest('form');
+    // Modal Beri Jatah Bahan: jumlah otomatis terisi jatah harian bahan yang dipilih (bisa diubah),
+    // dan tombol "Beri" di tabel langsung memilihkan kasir + bahan-nya.
+    (function () {
+      var modal = document.getElementById('modal-tambah-stok-bahan');
+      if (!modal) return;
+      var form = modal.querySelector('form');
+      var wrap = form.querySelector('[data-bahan-qty]');
       var input = wrap.querySelector('input[name="jumlah"]');
-      var select = form.querySelector('select[name="bahan_operasional_id"]');
-      var info = form.querySelector('#bahan-konversi');
-      var maks = parseInt(input.getAttribute('max'), 10) || 5;
-      var chips = wrap.parentElement.querySelectorAll('[data-bahan-set]');
+      var selectBahan = form.querySelector('select[name="bahan_operasional_id"]');
+      var selectKasir = form.querySelector('select[name="kasir_id"]');
+      var infoSatuan = form.querySelector('#bahan-satuan');
+      var maks = parseInt(input.getAttribute('max'), 10) || 50;
 
       function set(n) {
         n = Math.min(maks, Math.max(1, parseInt(n, 10) || 1));
         input.value = n;
-        chips.forEach(function (c) { c.classList.toggle('active', parseInt(c.dataset.bahanSet, 10) === n); });
-        var opt = select && select.options[select.selectedIndex];
-        var m = opt && opt.textContent.match(/=\s*(\d+)\s*sesi/);
-        if (info) info.textContent = m ? ('= ' + (n * parseInt(m[1], 10)) + ' sesi goreng (' + (n * parseInt(m[1], 10)) + ' transaksi)') : '';
+      }
+
+      // Batas sekali input beda per jenis (liter/tabung kecil, kemasan dalam pcs lebih besar).
+      function aturMaks() {
+        var opt = selectBahan.options[selectBahan.selectedIndex];
+        var m = opt ? parseInt(opt.getAttribute('data-maks'), 10) : 0;
+        maks = m > 0 ? m : 50;
+        input.setAttribute('max', maks);
+      }
+
+      function labelSatuan() {
+        var opt = selectBahan.options[selectBahan.selectedIndex];
+        infoSatuan.textContent = opt && opt.value ? '(' + opt.getAttribute('data-satuan') + ')' : '';
+      }
+
+      function isiJatah() {
+        var opt = selectBahan.options[selectBahan.selectedIndex];
+        var jatah = opt ? parseInt(opt.getAttribute('data-jatah'), 10) : 0;
+        aturMaks();
+        if (jatah > 0) set(jatah);
+        labelSatuan();
       }
 
       wrap.querySelectorAll('[data-bahan-ubah]').forEach(function (btn) {
         btn.addEventListener('click', function () { set((parseInt(input.value, 10) || 0) + parseInt(btn.dataset.bahanUbah, 10)); });
       });
-      chips.forEach(function (c) { c.addEventListener('click', function () { set(c.dataset.bahanSet); }); });
-      input.addEventListener('input', function () { set(input.value); });
-      if (select) select.addEventListener('change', function () { set(input.value); });
-      set(input.value);
-    });
+      input.addEventListener('input', function () { if (input.value !== '') set(input.value); });
+      selectBahan.addEventListener('change', isiJatah);
+      aturMaks();
+      labelSatuan();
+
+      // Tombol "Beri" di baris tabel: pilih kasir & bahan otomatis.
+      document.querySelectorAll('[data-beri-bahan]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          selectKasir.value = btn.getAttribute('data-beri-kasir');
+          selectBahan.value = btn.getAttribute('data-beri-bahan');
+          selectBahan.dispatchEvent(new Event('change'));
+        });
+      });
+    })();
 
     // Preview foto + nama saat memilih barang di modal "Tambah Stok".
     document.querySelectorAll('select[data-preview-target]').forEach(function (select) {
@@ -1217,9 +1396,13 @@
     document.addEventListener('DOMContentLoaded', function () {
       // Balik ke tab terakhir dibuka (biar nggak reset ke Data Stok
       // terus tiap kali reload/pagination di tab lain).
-      const tabTersimpan = localStorage.getItem('tabStokAktif');
+      // ?tab= (dari klik notifikasi) menang atas tab terakhir yang tersimpan.
+      const tabUrl = new URLSearchParams(window.location.search).get('tab');
+      const tabTersimpan = tabUrl || localStorage.getItem('tabStokAktif');
       if (tabTersimpan && tabTersimpan !== 'data-stok') {
         tampilkanTabStok(tabTersimpan);
+      } else if (tabUrl === 'data-stok') {
+        tampilkanTabStok('data-stok');
       }
 
       // Kalau ada error validasi, otomatis buka lagi modal yang tadi disubmit.

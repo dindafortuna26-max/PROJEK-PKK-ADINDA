@@ -60,14 +60,13 @@ class Transaksi extends Model
 
     /**
      * Label tampilan utk metode_bayar. Cuma 3 pilihan yang dipakai di
-     * seluruh aplikasi: cash, qris, paylater (sesuai enum di migration).
+     * seluruh aplikasi: cash dan qris.
      */
     public function getMetodeBayarLabelAttribute(): string
     {
         return match ($this->metode_bayar) {
             'cash' => 'Cash',
             'qris' => 'QRIS',
-            'paylater' => 'PayLater',
             default => ucfirst((string) $this->metode_bayar),
         };
     }
@@ -77,7 +76,6 @@ class Transaksi extends Model
         return match ($this->metode_bayar) {
             'cash' => 'bi-cash-stack',
             'qris' => 'bi-qr-code-scan',
-            'paylater' => 'bi-credit-card-2-back',
             default => 'bi-wallet2',
         };
     }
@@ -87,7 +85,7 @@ class Transaksi extends Model
      */
     public function getMetodeBayarLogoAttribute(): string
     {
-        $berkas = in_array($this->metode_bayar, ['cash', 'qris', 'paylater'], true)
+        $berkas = in_array($this->metode_bayar, ['cash', 'qris'], true)
             ? $this->metode_bayar
             : 'cash';
 

@@ -4,46 +4,44 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Bahan operasional (minyak goreng, gas) yang TIDAK ikut terjual di
- * transaksi tapi terpakai tiap penggorengan.
- *
- * Alurnya otomatis & saling terhubung:
- *  1. Admin restock dalam liter / tabung (1-5 per input).
- *  2. Tiap satuan = sesi_per_satuan sesi goreng
- *     (minyak 1 liter = 10 sesi, gas 1 tabung 3 kg = 20 sesi).
- *  3. Tiap transaksi selesai = 1 sesi goreng -> stok berkurang otomatis.
- *  4. Sisa sesi <= batas menipis -> "Menipis"; 0 -> "Habis"; keduanya
- *     muncul di lonceng notifikasi (admin & kasir) dan di Manajemen Stok.
- */
+
 class BahanOperasional extends Model
 {
     use HasFactory;
+     /**konstanta untuk jenis bahan operasional. Nilainya tetap, yaitu habis_pakai untuk minyak dan gas, serta kemasan untuk cup dan box */
+    public const JENIS_HABIS_PAKAI = 'habis_pakai';
+    public const JENIS_KEMASAN = 'kemasan';
 
-    /** Batas stok yang bisa dimasukkan admin dalam sekali input (1-5). */
-    public const MAKS_SEKALI_MASUK = 5;
+    /** Batas jumlah yang bisa diberikan admin dalam sekali input (liter / tabung). */
+    public const MAKS_SEKALI_MASUK = 50;
+
+    /** Kemasan dihitung per pcs, jadi batasnya lebih besar. */
+    public const MAKS_SEKALI_MASUK_KEMASAN = 2000;
 
     protected $table = 'bahan_operasional';
 
     protected $fillable = [
         'nama',
+        'jenis',
         'gambar',
         'satuan',
-        'sesi_per_satuan',
+        'ukuran_id',
+        'pakai_per_porsi',
+        'jatah_harian',
         'stok_minimum',
         'is_active',
     ];
 
-    /** Cache sisa sesi per-instance supaya satu halaman tidak query berulang. */
-    protected ?int $memoSesi = null;
-
     protected function casts(): array
     {
         return [
-            'sesi_per_satuan' => 'integer',
+            'jatah_harian' => 'integer',
+            'ukuran_id' => 'integer',
+            'pakai_per_porsi' => 'integer',
             'stok_minimum' => 'integer',
             'is_active' => 'boolean',
         ];
@@ -54,9 +52,59 @@ class BahanOperasional extends Model
         return $query->where('is_active', true);
     }
 
+    public function scopeKemasan($query)
+    {
+        return $query->where('jenis', self::JENIS_KEMASAN);
+    }
+
+    public function scopeHabisPakai($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('jenis', self::JENIS_HABIS_PAKAI)->orWhereNull('jenis');
+        });
+    }
+
+    public function ukuran(): BelongsTo
+    {
+        return $this->belongsTo(Ukuran::class);
+    }
+
+    public function getIsKemasanAttribute(): bool
+    {
+        return $this->jenis === self::JENIS_KEMASAN;
+    }
+
+    public function getLabelJenisAttribute(): string
+    {
+        return $this->is_kemasan ? 'Kemasan' : 'Bahan Habis-Pakai';
+    }
+
+    /** Batas input sekali beri jatah, tergantung jenis. */
+    public function maksSekaliMasuk(): int
+    {
+        return $this->is_kemasan ? self::MAKS_SEKALI_MASUK_KEMASAN : self::MAKS_SEKALI_MASUK;
+    }
+
+    /** Keterangan singkat aturan pemakaian, mis. "Otomatis −1 / porsi ukuran Kecil". */
+    public function getAturanPakaiAttribute(): string
+    {
+        if (! $this->is_kemasan) {
+            return 'Manual, diberi admin';
+        }
+
+        $ukuran = $this->ukuran?->nama;
+
+        return 'Otomatis −' . $this->pakai_per_porsi . ' / porsi' . ($ukuran ? ' ukuran ' . $ukuran : '');
+    }
+
     public function pergerakanStok(): HasMany
     {
         return $this->hasMany(PergerakanStokBahanOperasional::class, 'bahan_operasional_id');
+    }
+
+    public function permintaan(): HasMany
+    {
+        return $this->hasMany(PermintaanBahanOperasional::class, 'bahan_operasional_id');
     }
 
     /** URL foto bahan, null kalau belum ada foto (tampilan pakai ikon cadangan). */
@@ -82,124 +130,93 @@ class BahanOperasional extends Model
         }
     }
 
+    /** Kemasan pakai ikon kotak, gas ikon api, selain itu (minyak) ikon tetesan. */
     public function getIkonAttribute(): string
     {
+        if ($this->is_kemasan) {
+            return 'bi-box-seam';
+        }
+
         return stripos($this->nama, 'gas') !== false ? 'bi-fire' : 'bi-droplet-half';
     }
 
-    /** Sisa stok dalam SESI goreng = SUM(sesi masuk) - SUM(sesi keluar). */
-    public function getStokSesiAttribute(): int
-    {
-        if ($this->memoSesi === null) {
-            $masuk = (int) $this->pergerakanStok()->where('jenis', 'masuk')->sum('sesi');
-            $keluar = (int) $this->pergerakanStok()->where('jenis', 'keluar')->sum('sesi');
-            $this->memoSesi = max(0, $masuk - $keluar);
-        }
+    // ===================== STOK PER KASIR =====================
 
-        return $this->memoSesi;
+    /** Sisa stok milik satu kasir (liter / tabung). Tidak pernah minus. */
+    public function stokUntukKasir(int $kasirId): int
+    {
+        $masuk = (int) $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'masuk')->sum('jumlah');
+        $keluar = (int) $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'keluar')->sum('jumlah');
+
+        return max(0, $masuk - $keluar);
     }
 
-    public function segarkan(): static
+    /** "Dikelola" untuk kasir ini = admin pernah memberi jatah (ada baris masuk). */
+    public function sudahDikelolaUntukKasir(int $kasirId): bool
     {
-        $this->memoSesi = null;
-
-        return $this;
+        return $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'masuk')->exists();
     }
 
-    /** Sisa stok dalam liter / tabung (desimal 1 angka). */
-    public function getStokSaatIniAttribute(): float
+    /** belum_dikelola | habis | aman (tidak ada status "menipis": pemakaian tidak dihitung otomatis). */
+    public function statusUntukKasir(int $kasirId): string
     {
-        return round($this->stok_sesi / max(1, $this->sesi_per_satuan), 1);
-    }
-
-    /** Teks sisa stok, mis. "2,3 liter" / "1 tabung". */
-    public function labelStok(): string
-    {
-        $angka = number_format($this->stok_saat_ini, 1, ',', '.');
-        $angka = rtrim(rtrim($angka, '0'), ',');
-
-        return ($angka === '' ? '0' : $angka) . ' ' . $this->satuan;
-    }
-
-    /** Sesi tersisa pada satuan yang sedang dipakai (mis. 4 dari 10). */
-    public function getSesiBerjalanAttribute(): int
-    {
-        $sisa = $this->stok_sesi;
-        $per = max(1, $this->sesi_per_satuan);
-
-        if ($sisa <= 0) {
-            return 0;
-        }
-
-        $sisaBagi = $sisa % $per;
-
-        return $sisaBagi === 0 ? $per : $sisaBagi;
-    }
-
-    public function getPersenBerjalanAttribute(): int
-    {
-        return (int) round($this->sesi_berjalan / max(1, $this->sesi_per_satuan) * 100);
-    }
-
-    /**
-     * Status untuk tampilan & notifikasi:
-     * - belum_dikelola : belum pernah ada catatan stok
-     * - habis          : sisa sesi 0
-     * - menipis        : sisa sesi <= batas menipis
-     * - aman
-     */
-    public function getStatusStokAttribute(): string
-    {
-        if (! $this->pergerakanStok()->exists()) {
+        if (! $this->sudahDikelolaUntukKasir($kasirId)) {
             return 'belum_dikelola';
         }
 
-        return match (true) {
-            $this->stok_sesi <= 0 => 'habis',
-            $this->stok_sesi <= $this->stok_minimum => 'menipis',
-            default => 'aman',
-        };
+        return $this->stokUntukKasir($kasirId) <= 0 ? 'habis' : 'aman';
     }
 
-    /**
-     * Dipanggil otomatis tiap transaksi selesai (di dalam DB::transaction
-     * TransaksiController::store). 1 transaksi = 1 sesi goreng untuk semua
-     * bahan aktif yang stoknya sudah dikelola. Stok tidak dibuat minus.
-     */
-    public static function pakaiUntukTransaksi(string $noTransaksi, int $transaksiId, int $userId, int $sesi = 1): void
+    public function stokMasukTerakhirUntukKasir(int $kasirId)
     {
-        static::query()->where('is_active', true)->get()->each(
-            function (BahanOperasional $bahan) use ($noTransaksi, $transaksiId, $userId, $sesi) {
-                if (! $bahan->pergerakanStok()->exists()) {
-                    return; // belum dikelola: jangan dipotong
-                }
+        return $this->pergerakanStok()
+            ->where('kasir_id', $kasirId)
+            ->where('jenis', 'masuk')
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id')
+            ->first();
+    }
 
-                $ambil = min($sesi, $bahan->stok_sesi);
+    // ===================== KIRIMAN MENUNGGU KONFIRMASI =====================
 
-                if ($ambil < 1) {
-                    return; // sudah habis: admin sudah dapat notifikasi
-                }
+    public function penerimaan(): HasMany
+    {
+        return $this->hasMany(PenerimaanBahanOperasional::class, 'bahan_operasional_id');
+    }
 
-                $bahan->pergerakanStok()->create([
-                    'user_id' => $userId,
-                    'jenis' => 'keluar',
-                    'jumlah' => 0,
-                    'sesi' => $ambil,
-                    'transaksi_id' => $transaksiId,
-                    'keterangan' => "Otomatis: {$noTransaksi} ({$ambil} sesi goreng)",
-                    'tanggal' => now()->toDateString(),
-                ]);
-            }
-        );
+    /** Kiriman dari admin yang belum dijawab "Sudah" oleh kasir ini (lama ke baru). */
+    public function penerimaanMenungguUntukKasir(int $kasirId)
+    {
+        return $this->penerimaan()->menunggu()->where('kasir_id', $kasirId)->orderBy('id')->get();
+    }
+
+    // ===================== PERMINTAAN KASIR =====================
+
+    public function permintaanMenungguUntukKasir(int $kasirId): ?PermintaanBahanOperasional
+    {
+        return $this->permintaan()->menunggu()->where('kasir_id', $kasirId)->latest('id')->first();
+    }
+
+    /** Dipanggil saat admin memberi jatah baru: permintaan kasir itu dianggap selesai. */
+    public function tutupPermintaan(int $kasirId): void
+    {
+        $this->permintaan()->menunggu()->where('kasir_id', $kasirId)->update(['dipenuhi_pada' => now()]);
+    }
+
+    // ===================== TAMPILAN =====================
+
+    /** Teks jumlah, mis. "5 liter" / "1 tabung". */
+    public function labelJumlah(int|float $jumlah): string
+    {
+        return number_format($jumlah, 0, ',', '.') . ' ' . $this->satuan;
     }
 
     public static function labelStatus(string $status): string
     {
         return [
-            'aman' => 'Aman',
-            'menipis' => 'Menipis',
+            'aman' => 'Ada',
             'habis' => 'Habis',
-            'belum_dikelola' => 'Belum Dikelola',
+            'belum_dikelola' => 'Belum Diberi',
         ][$status] ?? $status;
     }
 }

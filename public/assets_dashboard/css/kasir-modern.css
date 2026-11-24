@@ -434,3 +434,25 @@
 .km .rcpt-total span:first-child { font-weight: 800; color: var(--km-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
 .km .rcpt-total span:last-child { font-weight: 800; font-size: 1.4rem; color: var(--km-red-dark); }
 .km .rcpt-actions { padding: 1rem 1.25rem 1.25rem; }
+
+/* ==========================================================
+   Pilihan ukuran + foto kemasan (halaman transaksi kasir)
+   Teks Kecil / Sedang / Besar + harga tetap ada; foto kemasan
+   (atau ikon kotak kalau belum ada foto) tampil di atasnya.
+   ========================================================== */
+.pos-modal .opt-size-row { gap: .6rem; }
+.pos-modal .opt-size {
+  position: relative; flex: 1 1 118px; max-width: 200px;
+  align-items: center; text-align: center; gap: 2px; padding: .6rem .6rem .7rem;
+}
+.pos-modal .opt-size .opt-size-foto {
+  width: 64px; height: 64px; margin-bottom: .35rem; border-radius: 14px; overflow: hidden; position: relative;
+  display: grid; place-items: center; background: #FBF1EC; border: 1px solid #F1E1DA; color: #C9A89E; font-size: 1.6rem;
+}
+.pos-modal .opt-size .opt-size-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.pos-modal .opt-size.selected .opt-size-foto { border-color: #8C1F1F; background: #fff; color: #8C1F1F; }
+.pos-modal .opt-size .opt-size-nama { font-size: .92rem; line-height: 1.2; }
+.pos-modal .opt-size .opt-size-kemasan { font-size: .68rem; font-weight: 600; color: #8C7370; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pos-modal .opt-size .opt-size-habis { font-size: .68rem; font-weight: 800; color: #A5222A; background: #FBDCDC; border-radius: 999px; padding: .05rem .5rem; margin-top: .15rem; }
+.pos-modal .opt-size.habis { opacity: .6; cursor: not-allowed; background: #FAF5F3; }
+.pos-modal .opt-size.habis:hover { border-color: #F1E1DA; }

@@ -22,6 +22,18 @@ class Ukuran extends Model
         ];
     }
 
+    /**
+     * Urutkan ukuran dari kecil ke besar: Kecil -> Sedang -> Besar.
+     * Ukuran lain yang ditambah belakangan (di luar tiga itu) ditaruh
+     * setelahnya, diurutkan menurut id.
+     */
+    public function scopeUrutKecilKeBesar($query)
+    {
+        return $query
+            ->orderByRaw("CASE LOWER(ukurans.nama) WHEN 'kecil' THEN 1 WHEN 'sedang' THEN 2 WHEN 'besar' THEN 3 ELSE 4 END")
+            ->orderBy('ukurans.id');
+    }
+
     public function menuUkurans(): HasMany
     {
         return $this->hasMany(MenuUkuran::class);

@@ -55,7 +55,7 @@
         ? $item->terakhir_masuk->tanggal->translatedFormat('d M Y') . ' (+' . $item->terakhir_masuk->jumlah . ')'
         : null,
       'harga' => $menu->ukuranAktif->map(fn ($u) => ['nama' => $u->nama, 'harga' => (int) $u->pivot->harga])->values()->all(),
-      'riwayat' => $riwayatStok($menu->pergerakanStok()),
+      'riwayat' => $riwayatStok($menu->pergerakanStok()->where('kasir_id', auth()->id())),
     ];
   };
 
@@ -79,21 +79,59 @@
         ? $item->terakhir_masuk->tanggal->translatedFormat('d M Y') . ' (+' . $item->terakhir_masuk->jumlah . ')'
         : null,
       'hargaTambahan' => (int) $topping->harga_tambahan,
-      'riwayat' => $riwayatStok($topping->pergerakanStok()),
+      'riwayat' => $riwayatStok($topping->pergerakanStok()->where('kasir_id', auth()->id())),
     ];
   };
 
-  $detailBahan = function ($item) use ($labelStatus) {
-    $b = $item->bahan;
-    $dikelola = $item->status !== 'belum_dikelola';
+  // Kemasan (cup / box): tampil di modal detail persis seperti menu.
+  $detailKemasan = function ($item) use ($labelStatus, $lebarBar, $riwayatStok) {
+    $k = $item->kemasan;
 
-    $riwayat = $b->pergerakanStok()->latest('id')->limit(5)->get()->map(function ($r) {
+    $riwayat = $k->pergerakanStok()->where('kasir_id', auth()->id())->latest('id')->limit(5)->get()->map(function ($r) use ($k) {
       return [
         'tgl' => $r->tanggal ? $r->tanggal->translatedFormat('d M Y') : '-',
         'jenis' => $r->jenis,
-        'jumlah' => (int) $r->sesi,
-        'unit' => 'sesi',
-        'label' => $r->jenis === 'masuk' ? 'Stok masuk' : ($r->transaksi_id ? 'Terpakai otomatis' : 'Koreksi stok'),
+        'jumlah' => (int) $r->jumlah,
+        'unit' => $k->satuan,
+        'label' => $r->jenis === 'masuk'
+          ? 'Stok dari admin'
+          : ($r->transaksi_id ? 'Terpakai otomatis (transaksi)' : 'Koreksi stok'),
+        'ket' => $r->keterangan,
+      ];
+    })->values()->all();
+
+    return [
+      'tipe' => 'kemasan',
+      'nama' => $k->nama,
+      'foto' => $k->gambar_url,
+      'label' => 'Kemasan' . ($k->ukuran ? ' · Ukuran ' . $k->ukuran->nama : ''),
+      'ikon' => $k->ikon,
+      'deskripsi' => 'Berkurang otomatis setiap transaksi (' . $k->aturan_pakai . '). Stoknya diberikan admin.',
+      'status' => $item->status,
+      'statusLabel' => $labelStatus[$item->status],
+      'stok' => (int) $item->stok,
+      'satuan' => $k->satuan,
+      'minimum' => (int) $k->stok_minimum,
+      'persen' => $lebarBar($item->stok, $k->stok_minimum, $item->status),
+      'terakhir' => $item->terakhir_masuk
+        ? $item->terakhir_masuk->tanggal->translatedFormat('d M Y') . ' (+' . $item->terakhir_masuk->jumlah . ')'
+        : null,
+      'riwayat' => $riwayat,
+    ];
+  };
+
+  // Bahan habis-pakai (minyak, gas): MANUAL, jatah dari admin.
+  $detailBahan = function ($item) {
+    $b = $item->bahan;
+    $dikelola = $item->status !== 'belum_dikelola';
+
+    $riwayat = $b->pergerakanStok()->where('kasir_id', auth()->id())->latest('id')->limit(5)->get()->map(function ($r) use ($b) {
+      return [
+        'tgl' => $r->tanggal ? $r->tanggal->translatedFormat('d M Y') : '-',
+        'jenis' => $r->jenis,
+        'jumlah' => (int) $r->jumlah,
+        'unit' => $b->satuan,
+        'label' => $r->jenis === 'masuk' ? 'Jatah dari admin' : 'Dilaporkan habis / koreksi',
         'ket' => $r->keterangan,
       ];
     })->values()->all();
@@ -102,20 +140,21 @@
       'tipe' => 'bahan',
       'nama' => $b->nama,
       'foto' => $b->gambar_url,
-      'label' => 'Bahan Operasional',
+      'label' => $b->label_jenis,
       'ikon' => $b->ikon,
-      'deskripsi' => 'Stok berkurang otomatis 1 sesi goreng tiap transaksi selesai. Kasir tidak perlu mengurangi manual.',
+      'deskripsi' => 'Jatah ini diberikan manual oleh admin dan tidak berkurang otomatis saat transaksi. Stok baru terisi setelah kamu konfirmasi "Sudah" menerimanya. Kalau sudah habis, tekan "Minta ke Admin".'
+        . ($item->penerimaan->isNotEmpty()
+          ? ' Ada kiriman ' . $b->labelJumlah((int) $item->penerimaan->sum('jumlah')) . ' dari admin yang menunggu konfirmasimu.'
+          : ''),
       'status' => $item->status,
-      'statusLabel' => $labelStatus[$item->status],
-      'stok' => $dikelola ? (float) $b->stok_saat_ini : 0,
+      'statusLabel' => \App\Models\BahanOperasional::labelStatus($item->status),
+      'stok' => $dikelola ? (int) $item->stok : 0,
       'satuan' => $b->satuan,
-      'persen' => $dikelola ? ($item->status === 'habis' ? 4 : (int) $b->persen_berjalan) : 0,
+      'persen' => $item->status === 'aman' ? 100 : 4,
       'tiles' => [
-        ['Sisa sesi goreng', $dikelola ? number_format($item->stok, 0, ',', '.') . ' kali' : '-'],
-        ['Batas menipis', (int) $b->stok_minimum . ' sesi'],
-        ['Setara', '1 ' . $b->satuan . ' = ' . $b->sesi_per_satuan . ' sesi'],
-        ['Stok masuk terakhir', $item->terakhir_masuk
-          ? $item->terakhir_masuk->tanggal->translatedFormat('d M Y') . ' (+' . ($item->terakhir_masuk->jumlah ?: $item->terakhir_masuk->sesi) . ' ' . ($item->terakhir_masuk->jumlah ? $b->satuan : 'sesi') . ')'
+        ['Jatah harian standar', $b->jatah_harian > 0 ? $b->labelJumlah($b->jatah_harian) : '-'],
+        ['Diberi terakhir', $item->terakhir_masuk
+          ? $item->terakhir_masuk->tanggal->translatedFormat('d M Y') . ' (+' . $b->labelJumlah($item->terakhir_masuk->jumlah) . ')'
           : 'Belum ada'],
       ],
       'riwayat' => $riwayat,
@@ -130,7 +169,7 @@
     <div>
       <span class="hero-eyebrow"><i class="bi bi-boxes"></i> Kasir</span>
       <h1>Cek Stok</h1>
-      <p>Lihat sisa stok menu, bumbu, dan topping. Stok minyak goreng &amp; gas berkurang otomatis tiap transaksi, jadi tinggal dipantau di tab Minyak &amp; Gas. Mau tambah stok? Minta Admin ya.</p>
+      <p>Lihat sisa stok menu, bumbu, topping, dan kemasan (cup/box). Semuanya berkurang otomatis tiap transaksi, jadi cukup dipantau. Khusus minyak &amp; gas dikasih admin secara manual, ada di tab Minyak &amp; Gas. Ini stok milikmu sendiri, terpisah dari kasir lain. Mau tambah stok? Minta Admin ya.</p>
     </div>
     <div class="kp-hero-steps">
       <span><b>{{ number_format($ringkasan['aman'], 0, ',', '.') }}</b> Aman</span>
@@ -183,6 +222,9 @@
         </button>
         <button type="button" id="tab-btn-topping" onclick="tampilkanTabStok('topping')">
           <i class="bi bi-droplet-fill"></i><span>Bumbu &amp; Topping</span>
+        </button>
+        <button type="button" id="tab-btn-kemasan" onclick="tampilkanTabStok('kemasan')">
+          <i class="bi bi-box-seam-fill"></i><span>Kemasan</span>
         </button>
         <button type="button" id="tab-btn-bahan" onclick="tampilkanTabStok('bahan')">
           <i class="bi bi-fire"></i><span>Minyak &amp; Gas</span>
@@ -316,15 +358,73 @@
     </div>
 
 
-    <!-- ===================== TAB: BAHAN OPERASIONAL (minyak goreng, gas) ===================== -->
+    <!-- ===================== TAB: KEMASAN (read-only, gaya menu) ===================== -->
+    <div id="tab-pane-kemasan" class="d-none">
+      <div class="stok-grid">
+        @forelse ($dataStokKemasan as $item)
+          @php $k = $item->kemasan; @endphp
+          <div class="stok-card st-{{ $item->status }}" data-status="{{ $item->status }}" data-detail="{{ json_encode($detailKemasan($item), JSON_UNESCAPED_UNICODE) }}" role="button" tabindex="0" title="Lihat detail" onclick="bukaDetailStok(this)" onkeydown="if (event.key === 'Enter') { bukaDetailStok(this); }">
+            <div class="stok-top">
+              @include('partials.thumb', ['src' => $k->gambar_url, 'icon' => $k->ikon, 'size' => 56, 'alt' => $k->nama])
+              <div class="flex-grow-1" style="min-width:0;">
+                <p class="stok-nama">{{ $k->nama }}</p>
+                <span class="stok-kat">Kemasan{{ $k->ukuran ? ' · Ukuran ' . $k->ukuran->nama : '' }}</span>
+              </div>
+              <span class="km-pill {{ $kelasPill[$item->status] }}">{{ $labelStatus[$item->status] }}</span>
+            </div>
+
+            <div>
+              <div class="stok-mid mb-2">
+                <div class="stok-angka">{{ number_format($item->stok, 0, ',', '.') }}<small>{{ $k->satuan }}</small></div>
+                <span class="stok-kat">Batas minimum: <b>{{ number_format($k->stok_minimum, 0, ',', '.') }}</b></span>
+              </div>
+              <div class="stok-meter"><i style="width: {{ $lebarBar($item->stok, $k->stok_minimum, $item->status) }}%"></i></div>
+            </div>
+
+            <div class="stok-foot">
+              <span>Stok masuk terakhir</span>
+              @if ($item->terakhir_masuk)
+                <b>{{ $item->terakhir_masuk->tanggal->translatedFormat('d M Y') }} (+{{ $item->terakhir_masuk->jumlah }})</b>
+              @else
+                <span>Belum ada</span>
+              @endif
+            </div>
+          </div>
+        @empty
+          <div class="stok-empty" style="grid-column: 1 / -1;">
+            <i class="bi bi-inbox"></i>
+            {{ request('cari') ? 'Tidak ada kemasan yang cocok dengan pencarian.' : 'Belum ada kemasan. Minta Admin menambahkan cup / box di Bahan Operasional.' }}
+          </div>
+        @endforelse
+      </div>
+
+      <div class="stok-empty d-none" data-kosong-filter>
+        <i class="bi bi-funnel"></i> Tidak ada barang dengan status ini.
+      </div>
+
+      <div class="stok-foot-bar">
+        <span>Menampilkan {{ $dataStokKemasan->count() }} dari {{ $dataStokKemasan->total() }} kemasan</span>
+        {{ $dataStokKemasan->links() }}
+      </div>
+    </div>
+
+    <!-- ===================== TAB: MINYAK & GAS (manual, jatah dari admin) ===================== -->
     <div id="tab-pane-bahan" class="d-none">
 
       @if ($perhatianBahan > 0)
         <div class="bo-banner">
           <i class="bi bi-exclamation-triangle-fill"></i>
-          <span>{{ $perhatianBahan }} bahan menipis atau habis. Kabari Admin supaya segera restock.</span>
+          <span>{{ $perhatianBahan }} bahan sudah habis atau sedang kamu minta ke Admin.</span>
         </div>
       @endif
+
+      <div class="bo-info" style="margin: 1.1rem 1.1rem 0;">
+        <i class="bi bi-info-circle-fill"></i>
+        <div>
+          <b>Jatah minyak &amp; gas diberikan oleh Admin</b>
+          <p>Minyak &amp; gas tidak berkurang otomatis saat transaksi. Kalau admin sudah memberi jatah, cek dulu apakah barangnya benar sudah kamu terima, lalu jawab &quot;Sudah&quot; atau &quot;Belum&quot;. Stok baru terisi setelah kamu jawab &quot;Sudah&quot;. Kalau sudah habis, tekan &quot;Minta ke Admin&quot;. Kemasan (cup/box) beda: berkurang otomatis dan dipantau di tab Kemasan.</p>
+        </div>
+      </div>
 
       <div class="bo-grid">
         @forelse ($dataStokBahan as $item)
@@ -338,42 +438,81 @@
               @include('partials.thumb', ['src' => $b->gambar_url, 'icon' => $b->ikon, 'size' => 56, 'alt' => $b->nama])
               <div>
                 <p class="bo-nama">{{ $b->nama }}</p>
-                <span class="bo-sub">1 {{ $b->satuan }} = {{ $b->sesi_per_satuan }} kali goreng (transaksi)</span>
+                <span class="bo-sub">
+                  @if ($b->jatah_harian > 0) Jatah harian {{ $b->labelJumlah($b->jatah_harian) }}
+                  @else Diberikan oleh Admin @endif
+                </span>
               </div>
               <span class="bo-pill {{ $status }}">{{ \App\Models\BahanOperasional::labelStatus($status) }}</span>
             </div>
 
-            @if ($dikelola)
-              <div>
-                <div class="bo-meter-label">
-                  <span>{{ $b->satuan }} yang sedang dipakai: <b>{{ $b->sesi_berjalan }}</b> dari {{ $b->sesi_per_satuan }} sesi</span>
-                  <span>{{ $b->persen_berjalan }}%</span>
-                </div>
-                <div class="bo-meter"><i style="width: {{ $b->persen_berjalan }}%"></i></div>
-              </div>
-            @endif
-
             <div class="bo-tiles">
-              <div class="bo-tile"><span>Sisa stok</span><b>{{ $dikelola ? $b->labelStok() : '-' }}</b></div>
-              <div class="bo-tile"><span>Sisa sesi goreng</span><b>{{ $dikelola ? number_format($item->stok, 0, ',', '.') . ' kali' : '-' }}</b></div>
+              <div class="bo-tile"><span>Sisa jatah</span><b>{{ $dikelola ? $b->labelJumlah($item->stok) : '-' }}</b></div>
+              <div class="bo-tile"><span>Diberi terakhir</span><b>{{ $item->terakhir_masuk ? $item->terakhir_masuk->tanggal->translatedFormat('d M') : '-' }}</b></div>
             </div>
 
-            @if ($status === 'habis')
-              <div class="bo-alert bad"><i class="bi bi-x-octagon-fill"></i><span>{{ $b->nama }} sudah habis. Segera kabari Admin untuk restock.</span></div>
-            @elseif ($status === 'menipis')
-              <div class="bo-alert warn"><i class="bi bi-exclamation-triangle-fill"></i><span>Tinggal {{ $item->stok }} sesi goreng ({{ $b->labelStok() }}). Minta Admin restock sebelum habis.</span></div>
+            @if ($item->penerimaan->isNotEmpty())
+              @php
+                $jumlahKiriman = (int) $item->penerimaan->sum('jumlah');
+                $sudahJawabBelum = $item->penerimaan->contains(fn ($p) => $p->belum_pada !== null);
+              @endphp
+              <div class="bo-alert warn">
+                <i class="bi bi-box-seam-fill"></i>
+                <span>
+                  Admin mengirim <b>{{ $b->labelJumlah($jumlahKiriman) }}</b> {{ $b->nama }}.
+                  @if ($sudahJawabBelum)
+                    Kamu tadi jawab belum menerima. Kalau sekarang sudah kamu terima, tekan &quot;Sudah&quot;.
+                  @else
+                    Cek dulu, apakah sudah kamu terima? Stoknya baru terisi setelah kamu jawab &quot;Sudah&quot;.
+                  @endif
+                </span>
+              </div>
+            @elseif ($item->permintaan)
+              <div class="bo-alert warn"><i class="bi bi-hourglass-split"></i><span>Permintaanmu sudah terkirim ke Admin. Menunggu Admin memberi {{ $b->nama }} lagi.</span></div>
+            @elseif ($status === 'habis')
+              <div class="bo-alert bad"><i class="bi bi-x-octagon-fill"></i><span>{{ $b->nama }} sudah habis. Minta lagi ke Admin.</span></div>
             @elseif ($status === 'belum_dikelola')
-              <div class="bo-alert warn"><i class="bi bi-info-circle-fill"></i><span>Belum ada stok. Minta Admin menambahkan stok dulu.</span></div>
+              <div class="bo-alert warn"><i class="bi bi-info-circle-fill"></i><span>Belum ada jatah. Minta ke Admin kalau {{ $b->nama }} dibutuhkan.</span></div>
             @else
-              <div class="bo-alert ok"><i class="bi bi-check-circle-fill"></i><span>Aman. Stok berkurang otomatis tiap transaksi selesai.</span></div>
+              <div class="bo-alert ok"><i class="bi bi-check-circle-fill"></i><span>Masih ada. Tekan tombol di bawah kalau sudah habis.</span></div>
             @endif
 
-            <span class="bo-lihat"><i class="bi bi-info-circle"></i> Ketuk untuk lihat detail</span>
+            <div class="bo-actions">
+              @if ($item->penerimaan->isNotEmpty())
+                <form action="{{ route('kasir.stok.bahan.konfirmasi', $b) }}" method="POST" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()"
+                  data-confirm="Yakin {{ $b->nama }} sudah kamu terima?"
+                  data-confirm-text="Stokmu akan bertambah {{ $b->labelJumlah((int) $item->penerimaan->sum('jumlah')) }}."
+                  data-confirm-yes="Ya, Sudah">
+                  @csrf
+                  <input type="hidden" name="jawaban" value="sudah">
+                  <button type="submit" class="bo-btn"><i class="bi bi-check-circle-fill"></i> Sudah</button>
+                </form>
+                @unless ($sudahJawabBelum)
+                  <form action="{{ route('kasir.stok.bahan.konfirmasi', $b) }}" method="POST" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
+                    @csrf
+                    <input type="hidden" name="jawaban" value="belum">
+                    <button type="submit" class="bo-btn ghost"><i class="bi bi-x-circle"></i> Belum</button>
+                  </form>
+                @endunless
+              @elseif ($item->permintaan)
+                <span class="bo-btn ghost" style="cursor: default;"><i class="bi bi-hourglass-split"></i> Menunggu Admin</span>
+              @else
+                <form action="{{ route('kasir.stok.bahan.minta', $b) }}" method="POST" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()"
+                  data-confirm="{{ $status === 'aman' ? 'Laporkan ' . $b->nama . ' sudah habis?' : 'Minta ' . $b->nama . ' ke Admin?' }}"
+                  data-confirm-text="Permintaan akan muncul di notifikasi Admin."
+                  data-confirm-yes="Ya, Minta">
+                  @csrf
+                  <button type="submit" class="bo-btn"><i class="bi bi-hand-index-thumb-fill"></i> {{ $status === 'aman' ? 'Habis, Minta ke Admin' : 'Minta ke Admin' }}</button>
+                </form>
+              @endif
+            </div>
+
+            <span class="bo-lihat"><i class="bi bi-info-circle"></i> Ketuk kartu untuk lihat detail</span>
           </div>
         @empty
           <div class="bo-empty">
             <i class="bi bi-fire"></i>
-            {{ request('cari') ? 'Tidak ada bahan operasional yang cocok dengan pencarian.' : 'Belum ada bahan operasional. Minta Admin menambahkan minyak goreng dan gas.' }}
+            {{ request('cari') ? 'Tidak ada bahan operasional yang cocok dengan pencarian.' : 'Belum ada minyak atau gas. Minta Admin menambahkannya di Bahan Operasional.' }}
           </div>
         @endforelse
       </div>
@@ -402,11 +541,13 @@
       const panes = {
         'data-stok': document.getElementById('tab-pane-data-stok'),
         'topping': document.getElementById('tab-pane-topping'),
+        'kemasan': document.getElementById('tab-pane-kemasan'),
         'bahan': document.getElementById('tab-pane-bahan'),
       };
       const btns = {
         'data-stok': document.getElementById('tab-btn-data-stok'),
         'topping': document.getElementById('tab-btn-topping'),
+        'kemasan': document.getElementById('tab-btn-kemasan'),
         'bahan': document.getElementById('tab-btn-bahan'),
       };
 
@@ -418,7 +559,7 @@
         btns[key].classList.toggle('active', aktif);
       });
 
-      // Filter status (Aman/Menipis/Habis) hanya untuk Menu & Bumbu/Topping.
+      // Filter status (Aman/Menipis/Habis) untuk Menu, Bumbu/Topping, dan Kemasan (bukan Minyak & Gas).
       const filterWrap = document.getElementById('filter-wrap');
       if (filterWrap) filterWrap.classList.toggle('d-none', tab === 'bahan');
 
@@ -435,7 +576,7 @@
     }
 
     function terapkanFilterStatus() {
-      ['tab-pane-data-stok', 'tab-pane-topping'].forEach((idPane) => {
+      ['tab-pane-data-stok', 'tab-pane-topping', 'tab-pane-kemasan'].forEach((idPane) => {
         const pane = document.getElementById(idPane);
         let adaYangTampil = false;
         let adaKartu = false;
@@ -453,9 +594,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-      const tabTersimpan = localStorage.getItem('tabCekStokAktif');
+      // ?tab= (dari klik notifikasi) menang atas tab terakhir yang tersimpan.
+      const tabUrl = new URLSearchParams(window.location.search).get('tab');
+      const tabTersimpan = tabUrl || localStorage.getItem('tabCekStokAktif');
       if (tabTersimpan && tabTersimpan !== 'data-stok') {
         tampilkanTabStok(tabTersimpan);
+      } else if (tabUrl === 'data-stok') {
+        tampilkanTabStok('data-stok');
       }
     });
   </script>
@@ -489,7 +634,7 @@
           '<span class="sd-status ' + tone + '">' + escStok(d.statusLabel) + '</span>' +
         '</div>';
 
-      // Kartu kecil di bawah angka stok. Bahan operasional punya isi sendiri (sesi goreng, setara, dll).
+      // Kartu kecil di bawah angka stok. Bahan operasional punya isi sendiri (jatah harian, diberi terakhir).
       const tilesHtml = d.tiles
         ? d.tiles.map(function (t) { return '<div class="sd-tile"><span>' + escStok(t[0]) + '</span><b>' + escStok(t[1]) + '</b></div>'; }).join('')
         : '<div class="sd-tile"><span>Batas minimum</span><b>' + Number(d.minimum).toLocaleString('id-ID') + '</b></div>' +

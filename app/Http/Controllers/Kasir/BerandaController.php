@@ -39,7 +39,6 @@ class BerandaController extends Controller
             'omzet' => (int) $trxHariIni()->sum('total'),
             'cash' => (int) $trxHariIni()->where('metode_bayar', 'cash')->sum('total'),
             'qris' => (int) $trxHariIni()->where('metode_bayar', 'qris')->sum('total'),
-            'paylater' => (int) $trxHariIni()->where('metode_bayar', 'paylater')->sum('total'),
         ];
         $ringkasan['rata_rata'] = $ringkasan['jumlah'] > 0
             ? (int) round($ringkasan['omzet'] / $ringkasan['jumlah'])
@@ -80,17 +79,19 @@ class BerandaController extends Controller
             ];
         });
 
-        // Peringatan stok (menu + bumbu/topping aktif) memakai accessor
-        // status_stok yang sama dengan halaman Cek Stok.
+        // Peringatan stok (menu + bumbu/topping aktif) — HANYA stok milik
+        // kasir yang login, sama dengan halaman Cek Stok.
         $peringatan = collect();
-        Menu::where('is_active', true)->get()->each(function ($m) use ($peringatan) {
-            if (in_array($m->status_stok, ['habis', 'menipis'], true)) {
-                $peringatan->push(['nama' => $m->nama, 'status' => $m->status_stok, 'stok' => $m->stok_saat_ini, 'jenis' => 'Menu']);
+        Menu::where('is_active', true)->get()->each(function ($m) use ($peringatan, $kasir) {
+            $status = $m->statusStokUntukKasir($kasir->id);
+            if (in_array($status, ['habis', 'menipis'], true)) {
+                $peringatan->push(['nama' => $m->nama, 'status' => $status, 'stok' => $m->stokUntukKasir($kasir->id), 'jenis' => 'Menu']);
             }
         });
-        Topping::aktif()->get()->each(function ($t) use ($peringatan) {
-            if (in_array($t->status_stok, ['habis', 'menipis'], true)) {
-                $peringatan->push(['nama' => $t->nama, 'status' => $t->status_stok, 'stok' => $t->stok_saat_ini, 'jenis' => $t->jenis_label]);
+        Topping::aktif()->get()->each(function ($t) use ($peringatan, $kasir) {
+            $status = $t->statusStokUntukKasir($kasir->id);
+            if (in_array($status, ['habis', 'menipis'], true)) {
+                $peringatan->push(['nama' => $t->nama, 'status' => $status, 'stok' => $t->stokUntukKasir($kasir->id), 'jenis' => $t->jenis_label]);
             }
         });
         $peringatan = $peringatan->sortBy(fn ($p) => $p['status'] === 'habis' ? 0 : 1)->values();

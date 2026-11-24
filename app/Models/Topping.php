@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models; 
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +21,7 @@ class Topping extends Model
         'gambar',
         'harga_tambahan',
         'stok_minimum',
+        'jatah_harian',
         'is_active',
     ];
 
@@ -29,6 +30,7 @@ class Topping extends Model
         return [
             'harga_tambahan' => 'integer',
             'stok_minimum' => 'integer',
+            'jatah_harian' => 'integer',
             'is_active' => 'boolean',
         ];
     }
@@ -98,6 +100,54 @@ class Topping extends Model
     public function getStokMasukTerakhirAttribute(): ?PergerakanStokTopping
     {
         return $this->pergerakanStok()
+            ->where('jenis', 'masuk')
+            ->latest('tanggal')
+            ->latest('id')
+            ->first();
+    }
+
+    // ================= STOK PER KASIR =================
+    // Tiap kasir punya stok sendiri: SUM(masuk) - SUM(keluar) pada baris
+    // log dengan kasir_id = kasir itu. Accessor stok_saat_ini / status_stok
+    // di atas tetap berarti TOTAL gabungan semua kasir (dipakai admin).
+
+    public function stokUntukKasir(int $kasirId): int
+    {
+        $masuk = $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'masuk')->sum('jumlah');
+        $keluar = $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'keluar')->sum('jumlah');
+
+        return (int) ($masuk - $keluar);
+    }
+
+    /**
+     * Dianggap "dikelola" untuk kasir ini kalau admin pernah mengisi stok
+     * (baris masuk) untuknya. Kalau belum, tidak diblokir di transaksi
+     * (sama filosofi "Belum Dikelola" yang sudah ada).
+     */
+    public function dikelolaUntukKasir(int $kasirId): bool
+    {
+        return $this->pergerakanStok()->where('kasir_id', $kasirId)->where('jenis', 'masuk')->exists();
+    }
+
+    public function statusStokUntukKasir(int $kasirId): string
+    {
+        if (! $this->dikelolaUntukKasir($kasirId)) {
+            return 'belum_dikelola';
+        }
+
+        $stok = $this->stokUntukKasir($kasirId);
+
+        return match (true) {
+            $stok <= 0 => 'habis',
+            $stok <= $this->stok_minimum => 'menipis',
+            default => 'aman',
+        };
+    }
+
+    public function stokMasukTerakhirUntukKasir(int $kasirId)
+    {
+        return $this->pergerakanStok()
+            ->where('kasir_id', $kasirId)
             ->where('jenis', 'masuk')
             ->latest('tanggal')
             ->latest('id')

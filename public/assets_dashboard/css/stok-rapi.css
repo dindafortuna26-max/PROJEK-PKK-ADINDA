@@ -1,0 +1,195 @@
+/* ==========================================================
+   Manajemen Stok (admin) - lapisan percantik, DIMUAT PALING AKHIR
+   (lewat <link> di dalam halaman) supaya menang atas cimol-premium.
+   Semua aturan dikunci ke .stok-page: halaman lain tidak terpengaruh.
+   Hanya tampilan, tidak ada logika.
+   ========================================================== */
+
+/* ==========================================================
+   PERCANTIK TAMPILAN (v2) - khusus halaman Manajemen Stok
+   Semua aturan di bawah dikunci ke .stok-page, jadi tidak
+   mengubah halaman admin lain. Hanya tampilan, tanpa logika.
+   ========================================================== */
+
+/* ---------- Banner atas ---------- */
+.stok-page.stok-page .ap-hero { margin-bottom: 1.25rem; padding: 1.6rem 1.9rem; }
+.stok-page.stok-page .ap-hero h1 { letter-spacing: -.025em; }
+.stok-page.stok-page .ap-hero p { line-height: 1.55; max-width: 62ch; }
+
+/* ---------- Pembungkus utama ---------- */
+.stok-page.stok-page .table-card-custom { padding: 0; overflow: hidden; border-radius: 26px !important; }
+
+/* ---------- Baris tab + pencarian ---------- */
+.stok-page.stok-page .table-header-control {
+  padding: 1rem 1.25rem; margin: 0; row-gap: .75rem;
+  background: linear-gradient(180deg, #FFFCFA, #FFF8F4);
+  border-bottom: 1px solid var(--sm-line);
+}
+.stok-page.stok-page .table-header-control > form { justify-content: flex-end; align-items: center; gap: .6rem !important; }
+.stok-page.stok-page .btn-group .btn-custom { font-weight: 700; padding: .55rem 1.1rem; white-space: nowrap; }
+.stok-page.stok-page .btn-group .btn-custom i { font-size: .95rem; }
+.stok-page.stok-page .btn-group .btn-custom-primary { color: var(--sm-red); }
+.stok-page.stok-page .table-search-box { flex: 1 1 240px; max-width: 360px; min-width: 200px; }
+.stok-page.stok-page .table-search-box:focus-within { box-shadow: 0 0 0 4px rgba(140,31,31,.1); }
+.stok-page.stok-page .form-select-custom { min-height: 42px; }
+
+/* ---------- Kartu ringkasan (4 kartu) : putih, bersih, warna per status ---------- */
+.stok-page.stok-page .row.g-3.mb-4 { margin-bottom: .5rem !important; padding: 1.25rem 1.25rem .25rem !important; }
+.stok-page.stok-page .row.g-3 .card.card-stat {
+  display: flex !important; flex-direction: column; justify-content: space-between;
+  position: relative; overflow: hidden;
+  background: #FFFFFF !important; background-image: none !important; color: var(--sm-ink) !important;
+  padding: 1.15rem 1.25rem 1.1rem 1.5rem !important; border-radius: 20px !important;
+  border: 1px solid var(--sm-line) !important;
+  box-shadow: 0 1px 2px rgba(60,12,12,.04), 0 8px 22px rgba(60,12,12,.06) !important;
+}
+/* garis warna di sisi kiri kartu */
+.stok-page.stok-page .row.g-3 .card.card-stat::before {
+  content: "" !important; position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important;
+  right: auto !important; width: 6px !important; height: auto !important;
+  background: var(--sm-accent) !important; opacity: 1 !important; border-radius: 0 !important;
+}
+/* lingkaran cahaya halus di pojok */
+.stok-page.stok-page .row.g-3 .card.card-stat::after {
+  content: "" !important; position: absolute !important; right: -34px !important; top: -34px !important;
+  width: 120px !important; height: 120px !important; border-radius: 50% !important;
+  background: var(--sm-accent-bg) !important; opacity: .75 !important; z-index: 0 !important;
+}
+.stok-page.stok-page .row.g-3 .card.card-stat > * { position: relative; z-index: 1; }
+.stok-page.stok-page .row.g-3 .card.card-stat:hover { transform: translateY(-3px) !important; box-shadow: 0 2px 4px rgba(60,12,12,.05), 0 16px 30px rgba(60,12,12,.12) !important; }
+.stok-page.stok-page .row.g-3 .card.card-stat .stat-icon-row { display: flex !important; align-items: center !important; gap: .75rem !important; margin: 0 0 .9rem !important; }
+.stok-page.stok-page .row.g-3 .card.card-stat .stat-icon-badge {
+  width: 42px !important; height: 42px !important; min-width: 42px; display: grid !important; place-items: center !important;
+  font-size: 1.15rem !important; border-radius: 14px !important; margin: 0 !important;
+  background: var(--sm-accent-bg) !important; background-image: none !important; color: var(--sm-accent) !important;
+  box-shadow: none !important;
+}
+.stok-page.stok-page .row.g-3 .card.card-stat .stat-label {
+  color: var(--sm-muted) !important; font-size: .72rem !important; font-weight: 800 !important;
+  letter-spacing: .07em !important; text-transform: uppercase !important; margin: 0 !important;
+}
+.stok-page.stok-page .row.g-3 .card.card-stat .stat-value {
+  color: var(--sm-accent) !important; font-size: 2.3rem !important; font-weight: 800 !important; line-height: 1 !important;
+  letter-spacing: -.03em; margin: 0 !important;
+}
+.stok-page.stok-page .row.g-3 .card.card-stat .stat-note { margin: .45rem 0 0 !important; font-size: .78rem !important; color: var(--sm-muted) !important; font-weight: 600 !important; }
+/* warna tiap kartu: total = merah marun, aman = hijau, menipis = kuning, habis = merah */
+.stok-page.stok-page .row.g-3 > [class*="col"]:nth-child(1) .card-stat { --sm-accent: #8C1F1F;       --sm-accent-bg: #FBE3D8; }
+.stok-page.stok-page .row.g-3 > [class*="col"]:nth-child(2) .card-stat { --sm-accent: var(--sm-ok);   --sm-accent-bg: var(--sm-ok-bg); }
+.stok-page.stok-page .row.g-3 > [class*="col"]:nth-child(3) .card-stat { --sm-accent: var(--sm-warn); --sm-accent-bg: var(--sm-warn-bg); }
+.stok-page.stok-page .row.g-3 > [class*="col"]:nth-child(4) .card-stat { --sm-accent: var(--sm-bad);  --sm-accent-bg: var(--sm-bad-bg); }
+
+/* ---------- Judul bagian ---------- */
+.stok-page.stok-page .sm-head { padding: 1.3rem 1.25rem .85rem; }
+.stok-page.stok-page .sm-head-sub { margin-top: 1rem; padding-top: 1.5rem; border-top: 1px dashed var(--sm-line); margin-left: 1.25rem; margin-right: 1.25rem; padding-left: 0; padding-right: 0; }
+.stok-page.stok-page .sm-head-title h3 { font-size: 1.08rem; letter-spacing: -.015em; }
+.stok-page.stok-page .sm-head-ico { width: 44px; height: 44px; border-radius: 14px; font-size: 1.2rem; }
+.stok-page.stok-page .sm-head .btn-custom { border-radius: 999px; font-weight: 700; padding: .6rem 1.2rem; }
+
+/* ---------- Kartu & tabel ---------- */
+.stok-page.stok-page .sm-card { border-radius: 22px; margin-bottom: 1.5rem; }
+.stok-page.stok-page .sm-table thead th { padding: .95rem 1rem; background: #FFF6F1; font-size: .7rem; }
+.stok-page.stok-page .sm-table tbody td { padding: .95rem 1rem; }
+.stok-page.stok-page .sm-table tbody tr:nth-child(even):not(.sm-row-auto) { background: #FFFDFC; }
+.stok-page.stok-page .sm-table tbody tr:hover,
+.stok-page.stok-page .sm-table tbody tr:hover td { background: #FFF8F4; }
+.stok-page.stok-page .sm-table tbody tr > td:first-child,
+.stok-page.stok-page .sm-table thead tr > th:first-child { padding-left: 1.25rem; }
+.stok-page.stok-page .sm-table tbody tr > td:last-child,
+.stok-page.stok-page .sm-table thead tr > th:last-child { padding-right: 1.25rem; }
+.stok-page.stok-page .sm-col-no { width: 56px; text-align: center; }
+.stok-page.stok-page .sm-item b { font-size: .92rem; color: var(--sm-ink); }
+.stok-page.stok-page .sm-item span { font-size: .76rem; }
+.stok-page.stok-page .sm-stock-num { font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.stok-page.stok-page .sm-meter { height: 9px; background: #F3E7E2; box-shadow: inset 0 1px 2px rgba(60,12,12,.06); }
+.stok-page.stok-page .sm-meter > i { background-image: linear-gradient(90deg, rgba(255,255,255,.28), rgba(255,255,255,0)); background-color: var(--sm-ok); }
+.stok-page.stok-page .sm-meter.warn > i { background-color: #E0A100; }
+.stok-page.stok-page .sm-meter.bad > i { background-color: var(--sm-bad); }
+.stok-page.stok-page .sm-meter.neutral > i { background-color: #CFC4C1; }
+.stok-page.stok-page .sm-pill { padding: .3rem .8rem; }
+.stok-page.stok-page .sm-pill.ok { box-shadow: inset 0 0 0 1px rgba(30,142,90,.18); }
+.stok-page.stok-page .sm-pill.warn { box-shadow: inset 0 0 0 1px rgba(183,121,31,.22); }
+.stok-page.stok-page .sm-pill.bad { box-shadow: inset 0 0 0 1px rgba(180,35,35,.2); }
+.stok-page.stok-page .sm-user { padding: .2rem .65rem .2rem .25rem; background: #FFF8F4; border: 1px solid var(--sm-line); border-radius: 999px; font-weight: 600; }
+.stok-page.stok-page .sm-av { background: linear-gradient(135deg, #B23A3A, #8C1F1F); color: #fff; }
+.stok-page.stok-page .sm-flow-ico { border-radius: 11px; }
+.stok-page.stok-page .sm-note { line-height: 1.45; }
+.stok-page.stok-page .sm-tag { border-radius: 999px; padding: .15rem .6rem; }
+
+/* ---------- Tombol aksi (edit / hapus) ---------- */
+.stok-page.stok-page .sm-icon-btn { width: 36px; height: 36px; border-radius: 12px; }
+.stok-page.stok-page .sm-icon-btn:not(.danger):hover { background: var(--sm-red); border-color: var(--sm-red); color: #fff; }
+.stok-page.stok-page .sm-icon-btn.danger:hover { background: var(--sm-bad); border-color: var(--sm-bad); color: #fff; }
+
+/* ---------- Filter segmen ---------- */
+.stok-page.stok-page .sm-seg { background: #F6E9E3; box-shadow: inset 0 0 0 1px rgba(140,31,31,.06); }
+.stok-page.stok-page .sm-seg a { padding: .45rem 1.05rem; }
+
+/* ---------- Footer & pagination ---------- */
+.stok-page.stok-page .sm-foot { padding: .85rem 1.25rem; }
+.stok-page.stok-page .sm-foot .pagination { gap: .25rem; flex-wrap: wrap; }
+.stok-page.stok-page .sm-foot .page-link {
+  border: 1px solid var(--sm-line); border-radius: 10px !important; color: var(--sm-red);
+  min-width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 .55rem; font-size: .8rem; font-weight: 700; background: #fff;
+}
+.stok-page.stok-page .sm-foot .page-link:hover { background: var(--sm-soft); border-color: var(--sm-red); }
+.stok-page.stok-page .sm-foot .page-item.active .page-link { background: var(--sm-red); border-color: var(--sm-red); color: #fff; }
+.stok-page.stok-page .sm-foot .page-item.disabled .page-link { color: #C9B8B4; background: #FBF7F5; }
+
+/* ---------- Baris kosong ---------- */
+.stok-page.stok-page .sm-empty { padding: 3rem 1rem !important; font-size: .9rem; }
+.stok-page.stok-page .sm-empty i { font-size: 2.2rem; color: #D9B9AE; opacity: 1; }
+
+/* ---------- Kotak info bahan operasional ---------- */
+.stok-page.stok-page .bo-info { margin: .75rem 1.25rem 0; border-radius: 18px; }
+
+/* ---------- Modal (form tambah / edit stok) ---------- */
+.stok-page.stok-page .modal-content { border-radius: 24px; overflow: hidden; border: 0; box-shadow: 0 24px 60px rgba(60,12,12,.28); }
+.stok-page.stok-page .modal-body { padding: 1.4rem 1.5rem; }
+.stok-page.stok-page .modal-footer { padding: 1rem 1.5rem 1.3rem; gap: .5rem; }
+
+/* ---------- Responsif ---------- */
+.stok-page.stok-page .table-responsive { -webkit-overflow-scrolling: touch; }
+.stok-page.stok-page .sm-table { min-width: 760px; }
+@media (max-width: 991.98px) {
+  .stok-page.stok-page .table-header-control > form { width: 100%; justify-content: stretch; }
+  .stok-page.stok-page .table-search-box { max-width: none; flex: 1 1 100%; }
+}
+@media (max-width: 767.98px) {
+  .stok-page.stok-page .ap-hero { padding: 1.25rem; border-radius: 22px !important; }
+  .stok-page.stok-page .table-header-control { padding: .85rem; }
+  .stok-page.stok-page .btn-group { width: 100%; }
+  .stok-page.stok-page .btn-group .btn-custom { flex: 1 1 auto; justify-content: center; padding: .55rem .7rem; font-size: .82rem; }
+  .stok-page.stok-page .row.g-3.mb-4 { padding: .85rem .85rem 0 !important; }
+  .stok-page.stok-page .card-stat .stat-value { font-size: 1.65rem; }
+  .stok-page.stok-page .sm-head-sub { margin-left: .75rem; margin-right: .75rem; }
+  .stok-page.stok-page .sm-head .btn-custom, .stok-page.stok-page .sm-head .d-flex { width: 100%; }
+  .stok-page.stok-page .sm-head .btn-custom { justify-content: center; }
+  .stok-page.stok-page .sm-foot { justify-content: center; text-align: center; }
+  .stok-page.stok-page .bo-info { margin-left: .75rem; margin-right: .75rem; }
+}
+
+/* ---------- Kolom cari: ikon tidak menimpa tulisan ---------- */
+.stok-page.stok-page .table-search-box { position: relative; }
+.stok-page.stok-page .table-search-box .table-search-input {
+  padding: .6rem 1rem .6rem 2.7rem !important; min-height: 42px; width: 100%;
+  background: #fff !important; border: 1.5px solid var(--sm-line) !important; font-size: .88rem;
+}
+.stok-page.stok-page .table-search-box .table-search-input:focus { border-color: var(--sm-red) !important; }
+.stok-page.stok-page .table-search-box .table-search-icon {
+  left: 1.05rem !important; z-index: 2; color: var(--sm-muted) !important; font-size: .9rem !important; pointer-events: none;
+}
+/* lingkaran hias kartu ringkasan dikecilkan sedikit */
+.stok-page .row.g-3 .card.card-stat::after { width: 96px !important; height: 96px !important; right: -28px !important; top: -28px !important; opacity: .65 !important; }
+@media (max-width: 767.98px) {
+  .stok-page.stok-page .table-header-control > form .form-select-custom { max-width: none !important; width: 100%; flex: 1 1 100%; }
+}
+
+/* Sisa stok bahan operasional: angka biasa (tidak tebal & besar), satuan abu-abu kecil */
+.stok-page.stok-page .sm-stock-num.sm-stock-ringan {
+  font-size: .9rem; font-weight: 600; line-height: 1.3; letter-spacing: 0; color: var(--sm-ink);
+}
+.stok-page.stok-page .sm-stock-num.sm-stock-ringan small {
+  font-size: .82rem; font-weight: 500; color: var(--sm-muted); margin-left: .25rem;
+}

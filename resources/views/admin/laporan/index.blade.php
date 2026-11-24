@@ -175,7 +175,6 @@
           <option value="">Semua Metode</option>
           <option value="cash" {{ $metodeBayar === 'cash' ? 'selected' : '' }}>Cash</option>
           <option value="qris" {{ $metodeBayar === 'qris' ? 'selected' : '' }}>QRIS</option>
-          <option value="paylater" {{ $metodeBayar === 'paylater' ? 'selected' : '' }}>PayLater</option>
         </select>
       </div>
 

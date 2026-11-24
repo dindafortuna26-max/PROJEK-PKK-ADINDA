@@ -1,0 +1,173 @@
+/* ==========================================================
+   Halaman Profil (kasir & admin) - tampilan modern
+   Dimuat PALING AKHIR lewat <link> di dalam halaman, dan semua
+   aturan dikunci ke .pf-page supaya halaman lain tidak berubah.
+   Hanya tampilan, tidak ada logika.
+   ========================================================== */
+.pf-page {
+  --pf-red: #8C1F1F; --pf-red-2: #B23A3A; --pf-dark: #3D0B0B; --pf-gold: #FFD166;
+  --pf-ink: #2B1414; --pf-muted: #8C7370; --pf-line: #F1E1DA; --pf-soft: #FFF8F4;
+  --pf-ok: #1E8E5A; --pf-ok-bg: #DDF5E8; --pf-bad: #B42323; --pf-bad-bg: #FBDCDC;
+}
+
+/* ---------- Judul halaman ---------- */
+.pf-page.pf-page .page-header { margin-bottom: 1.25rem; }
+
+/* ---------- Kartu profil (hero) ---------- */
+.pf-page.pf-page .profile-hero {
+  border-radius: 30px !important; background: #fff; overflow: hidden;
+  border: 1px solid var(--pf-line) !important;
+  box-shadow: 0 2px 4px rgba(60,12,12,.04), 0 24px 50px -22px rgba(92,18,18,.28) !important;
+}
+.pf-page.pf-page .profile-hero-cover {
+  position: relative; height: 168px; overflow: hidden;
+  background:
+    radial-gradient(420px 220px at 88% -10%, rgba(255,209,102,.55), transparent 62%),
+    radial-gradient(360px 240px at 8% 120%, rgba(255,150,130,.45), transparent 60%),
+    linear-gradient(120deg, #5C1212 0%, #8C1F1F 48%, #C24545 100%) !important;
+}
+.pf-page.pf-page .profile-hero-cover::before {
+  content: ""; position: absolute; inset: 0; opacity: .5;
+  background-image: radial-gradient(rgba(255,255,255,.22) 1.2px, transparent 1.4px);
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 10%, #000 90%);
+          mask-image: linear-gradient(90deg, transparent 10%, #000 90%);
+}
+.pf-page.pf-page .profile-hero-cover::after {
+  content: ""; position: absolute; right: -60px; bottom: -90px; width: 260px; height: 260px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.14); box-shadow: 0 0 0 28px rgba(255,255,255,.05);
+}
+.pf-page.pf-page .profile-hero-body {
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: 1.4rem;
+  padding: 0 2rem 1.7rem; margin-top: -54px; position: relative;
+}
+.pf-page.pf-page .profile-hero-avatar {
+  width: 132px; height: 132px; border-radius: 50% !important; object-fit: cover; background: #fff;
+  border: 0 !important;
+  box-shadow: 0 0 0 6px #fff, 0 0 0 9px var(--pf-gold), 0 18px 34px -10px rgba(36,16,16,.5) !important;
+  flex-shrink: 0;
+}
+.pf-page.pf-page .profile-hero-info { flex: 1 1 280px; min-width: 0; padding-bottom: .1rem; }
+.pf-page.pf-page .profile-hero-name { font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; color: var(--pf-ink); margin: 0 0 .6rem; line-height: 1.15; }
+.pf-page.pf-page .profile-hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .84rem; color: var(--pf-muted); }
+.pf-page.pf-page .profile-hero-meta > span:not(.profile-role-badge) {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .32rem .8rem;
+  background: var(--pf-soft); border: 1px solid var(--pf-line); border-radius: 999px; font-weight: 600; color: #6B4A47;
+}
+.pf-page.pf-page .profile-hero-meta i { margin: 0; color: var(--pf-red-2); }
+.pf-page.pf-page .profile-role-badge { padding: .34rem .9rem; font-size: .76rem; font-weight: 800; letter-spacing: .02em; border-radius: 999px !important; }
+.pf-page.pf-page .profile-role-badge i { color: inherit; }
+.pf-page.pf-page .profile-role-badge.role-kasir { background: linear-gradient(135deg, #FFE9A8, #FFD166) !important; color: #6B4700 !important; }
+.pf-page.pf-page .profile-role-badge.role-admin { background: linear-gradient(135deg, #FBE3D8, #F6C9B8) !important; color: var(--pf-red) !important; }
+
+.pf-page.pf-page .profile-hero-stats { display: flex; gap: .8rem; padding-bottom: .1rem; }
+.pf-page.pf-page .profile-stat {
+  min-width: 118px; text-align: left; padding: .8rem 1.1rem; border-radius: 18px !important;
+  background: linear-gradient(160deg, #FFFFFF, #FFF6F1) !important; border: 1px solid var(--pf-line);
+  box-shadow: 0 1px 2px rgba(60,12,12,.04), 0 8px 18px -10px rgba(92,18,18,.2);
+}
+.pf-page.pf-page .profile-stat-value { font-size: 1.35rem; font-weight: 800; letter-spacing: -.03em; color: var(--pf-red); line-height: 1.1; }
+.pf-page.pf-page .profile-stat-label { display: block; margin-top: .2rem; font-size: .68rem; font-weight: 800; letter-spacing: .08em; color: var(--pf-muted); }
+
+/* ---------- Kartu isi (Data Diri, Info Akun, Password) ---------- */
+.pf-page.pf-page .table-card-custom {
+  border-radius: 26px !important; background: #fff; border: 1px solid var(--pf-line) !important;
+  box-shadow: 0 1px 2px rgba(60,12,12,.04), 0 14px 34px -18px rgba(92,18,18,.2) !important;
+}
+.pf-page.pf-page .card-title { display: flex; align-items: center; gap: .7rem; font-size: 1.08rem; font-weight: 800; letter-spacing: -.02em; color: var(--pf-ink); }
+.pf-page.pf-page .card-title > i {
+  width: 38px; height: 38px; margin: 0 !important; flex-shrink: 0; display: grid; place-items: center;
+  border-radius: 12px; font-size: 1.05rem; background: #FBE3D8; color: var(--pf-red);
+}
+.pf-page.pf-page .table-user-sub { color: var(--pf-muted); font-size: .84rem; }
+.pf-page.pf-page .table-card-custom .card-title + .table-user-sub { margin-left: calc(38px + .7rem); margin-top: -.15rem; }
+
+/* ---------- Form ---------- */
+.pf-page.pf-page .form-label-custom { font-size: .8rem; font-weight: 800; letter-spacing: .02em; color: #5B4846; margin-bottom: .4rem; display: block; }
+.pf-page.pf-page .form-control-custom {
+  min-height: 46px; border-radius: 14px; background: #FFFCFA; border: 1.5px solid #EBD9D1; font-size: .92rem; width: 100%;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.pf-page.pf-page textarea.form-control-custom { min-height: 96px; resize: vertical; padding-top: .7rem; }
+.pf-page.pf-page .form-control-custom:hover { border-color: #DDB9AD; }
+.pf-page.pf-page .form-control-custom:focus { background: #fff; border-color: var(--pf-red); box-shadow: 0 0 0 4px rgba(140,31,31,.1); }
+.pf-page.pf-page .form-control-custom.is-invalid-custom { border-color: var(--pf-bad); background: #FFF8F8; }
+.pf-page.pf-page .form-feedback-custom { display: block; margin-top: .35rem; font-size: .76rem; color: var(--pf-muted); }
+.pf-page.pf-page .form-feedback-custom.invalid-custom { color: var(--pf-bad); font-weight: 700; }
+
+/* area upload foto */
+.pf-page.pf-page .foto-upload {
+  padding: 1rem 1.2rem; gap: 1.2rem; background: var(--pf-soft);
+  border: 1.5px dashed #E7C9BE; border-radius: 20px;
+}
+.pf-page.pf-page .foto-upload:hover { border-color: var(--pf-red-2); background: #FFFAF7; }
+.pf-page.pf-page .foto-upload-preview { width: 84px; height: 84px; }
+.pf-page.pf-page .foto-upload-hint { font-size: .76rem; color: var(--pf-muted); }
+
+/* pilihan jenis kelamin */
+.pf-page.pf-page .radio-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.pf-page.pf-page .radio-card { display: block; }
+.pf-page.pf-page .radio-card-body {
+  display: flex; align-items: center; justify-content: center; gap: .55rem; min-height: 48px; width: 100%;
+  border-radius: 14px !important; font-weight: 700; color: #6B4A47; background: #FFFCFA;
+  border: 1.5px solid #EBD9D1 !important;
+}
+.pf-page.pf-page .radio-card:hover .radio-card-body { border-color: var(--pf-red-2) !important; }
+.pf-page.pf-page .radio-card input:checked + .radio-card-body {
+  background: linear-gradient(135deg, #FBEDEB, #F9DDD6) !important; color: var(--pf-red);
+  border-color: var(--pf-red) !important; box-shadow: 0 0 0 4px rgba(140,31,31,.1);
+}
+
+/* tombol */
+.pf-page.pf-page .btn-custom { border-radius: 999px; font-weight: 800; min-height: 46px; padding-inline: 1.5rem; }
+.pf-page.pf-page .btn-custom-primary {
+  background: linear-gradient(135deg, var(--pf-red-2), var(--pf-red)) !important; color: #fff !important; border: 0 !important;
+  box-shadow: 0 10px 20px -8px rgba(140,31,31,.55);
+}
+.pf-page.pf-page .btn-custom-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 24px -8px rgba(140,31,31,.6); }
+
+/* ---------- Info Akun ---------- */
+.pf-page.pf-page .info-list { display: grid; gap: .5rem; margin: 0; }
+.pf-page.pf-page .info-list > div {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .75rem 1rem; border: 1px solid var(--pf-line) !important; border-radius: 16px; background: var(--pf-soft);
+}
+.pf-page.pf-page .info-list dt { display: inline-flex; align-items: center; gap: .6rem; font-size: .84rem; font-weight: 700; color: var(--pf-muted); }
+.pf-page.pf-page .info-list dt i {
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px;
+  background: #fff; color: var(--pf-red-2); font-size: .9rem; box-shadow: inset 0 0 0 1px var(--pf-line);
+}
+.pf-page.pf-page .info-list dd { font-weight: 800; color: var(--pf-ink); font-size: .9rem; }
+.pf-page.pf-page .badge-table.success { background: var(--pf-ok-bg); color: var(--pf-ok); }
+.pf-page.pf-page .badge-table.failed { background: var(--pf-bad-bg); color: var(--pf-bad); }
+
+/* ---------- Hapus akun ---------- */
+.pf-page.pf-page .danger-zone {
+  border-radius: 24px !important; border: 1.5px dashed rgba(198,40,40,.35) !important;
+  background: linear-gradient(135deg, #FFF9F8, #FFF3F1) !important; box-shadow: none !important;
+}
+.pf-page.pf-page .danger-zone .card-title::before {
+  content: "\F33A"; font-family: "bootstrap-icons"; width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 12px; background: var(--pf-bad-bg); color: var(--pf-bad); font-size: 1.05rem; flex-shrink: 0;
+}
+.pf-page.pf-page .btn-custom-outline-danger { border-width: 1.5px; }
+.pf-page.pf-page .btn-custom-outline-danger:hover { transform: translateY(-1px); }
+
+/* ---------- Responsif ---------- */
+@media (max-width: 991.98px) {
+  .pf-page.pf-page .profile-hero-stats { width: 100%; }
+  .pf-page.pf-page .profile-stat { flex: 1 1 0; }
+}
+@media (max-width: 575.98px) {
+  .pf-page.pf-page .profile-hero { border-radius: 24px !important; }
+  .pf-page.pf-page .profile-hero-cover { height: 128px; }
+  .pf-page.pf-page .profile-hero-body { flex-direction: column; align-items: center; text-align: center; padding: 0 1.1rem 1.4rem; margin-top: -58px; gap: 1rem; }
+  .pf-page.pf-page .profile-hero-avatar { width: 112px; height: 112px; }
+  .pf-page.pf-page .profile-hero-info { flex: 0 0 auto; width: 100%; }
+  .pf-page.pf-page .profile-hero-name { font-size: 1.45rem; }
+  .pf-page.pf-page .profile-hero-meta { justify-content: center; }
+  .pf-page.pf-page .table-card-custom .card-title + .table-user-sub { margin-left: 0; }
+  .pf-page.pf-page .radio-cards { grid-template-columns: 1fr; }
+  .pf-page.pf-page .btn-custom { width: 100%; justify-content: center; }
+  .pf-page.pf-page .danger-zone .btn-custom { width: 100%; }
+}

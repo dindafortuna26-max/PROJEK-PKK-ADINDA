@@ -51,13 +51,7 @@ class RiwayatTransaksiController extends Controller
         ]);
     }
 
-    /**
-     * GET /admin/riwayat-transaksi/{transaksi}
-     * Dipanggil lewat fetch() dari baris tabel / tombol mata. Balikan
-     * berupa potongan HTML (bukan JSON) supaya tinggal ditempel ke
-     * panel Detail Transaksi di sebelah kanan — tidak perlu templating
-     * JS terpisah.
-     */
+   
     public function show(Transaksi $transaksi): View
     {
         $transaksi->load(['kasir', 'detail.opsi']);
@@ -156,7 +150,7 @@ class RiwayatTransaksiController extends Controller
             'omzet' => $omzet,
             'rata_rata' => $jumlah > 0 ? (int) round($omzet / $jumlah) : 0,
             'tunai' => (int) $selesai()->where('metode_bayar', 'cash')->sum('total'),
-            'non_tunai' => (int) $selesai()->whereIn('metode_bayar', ['qris', 'paylater'])->sum('total'),
+            'non_tunai' => (int) $selesai()->where('metode_bayar', 'qris')->sum('total'),
             'dibatalkan' => $this->filterQuery($request)->where('status', '!=', 'selesai')->count(),
         ];
     }

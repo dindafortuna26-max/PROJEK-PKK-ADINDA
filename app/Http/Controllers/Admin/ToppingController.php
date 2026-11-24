@@ -11,14 +11,7 @@ use Illuminate\View\View;
 
 class ToppingController extends Controller
 {
-    /**
-     * GET /admin/topping
-     * Halaman "Master Topping & Bumbu": dua tab (Bumbu / Topping),
-     * masing-masing dengan CRUD lewat modal (nama, harga tambahan,
-     * batas stok menipis, status aktif). Stok berjalannya sendiri
-     * dikelola di halaman Manajemen Stok (tab "Topping & Bumbu"),
-     * sama seperti pemisahan Master Menu vs Manajemen Stok.
-     */
+   
     public function index(Request $request): View
     {
         $toppings = Topping::query()

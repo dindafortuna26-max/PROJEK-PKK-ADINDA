@@ -48,7 +48,7 @@ class TransaksiSeeder extends Seeder
             return;
         }
 
-        $metodeBayarPilihan = ['cash', 'qris', 'paylater'];
+        $metodeBayarPilihan = ['cash', 'qris'];
         $levelPedasPilihan = ['tidak_pedas', 'level_1', 'level_2', 'level_3'];
         $pelengkapPilihan = ['Bawang goreng', 'Daun jeruk', 'Seledri'];
 

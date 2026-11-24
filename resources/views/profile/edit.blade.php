@@ -61,6 +61,7 @@
     <!-- ===================== DATA DIRI ===================== -->
     <div class="col-xl-7">
       <div class="table-card-custom h-100 mb-0">
+        @if ($user->role === 'admin')
         <form action="{{ route('profile.update') }}" method="POST" class="p-4" enctype="multipart/form-data">
           @csrf
           @method('PATCH')
@@ -104,8 +105,8 @@
 
             <div class="col-md-6">
               <label class="form-label-custom">No. HP</label>
-              <input type="text" name="no_hp" inputmode="tel" value="{{ old('no_hp', $user->no_hp) }}"
-                class="form-control-custom {{ $errors->has('no_hp') ? 'is-invalid-custom' : '' }}" placeholder="contoh: 0812 3456 7890">
+              <input type="text" name="no_hp" inputmode="numeric" maxlength="13" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,13)" value="{{ old('no_hp', $user->no_hp) }}"
+                class="form-control-custom {{ $errors->has('no_hp') ? 'is-invalid-custom' : '' }}" placeholder="contoh: 081234567890">
               @error('no_hp')
                 <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
               @enderror
@@ -150,13 +151,54 @@
             </div>
           </div>
 
-          <div class="mt-4">
-            <button type="submit" class="btn-custom btn-custom-primary">
+          <div class="form-savebar" id="profil-savebar">
+            <span class="form-savebar-text" id="profil-savebar-text">Belum ada perubahan.</span>
+            <button type="submit" class="btn-custom btn-custom-primary" id="profil-savebar-btn" disabled>
               <i class="bi bi-check-lg"></i>
               <span>Simpan Perubahan</span>
             </button>
           </div>
         </form>
+        @else
+        <div class="p-4">
+          <h2 class="card-title mb-1"><i class="bi bi-person-lines-fill me-2"></i>Data Diri</h2>
+          <p class="table-user-sub mb-4">Data diri hanya bisa diubah oleh Admin. Kamu hanya bisa mengganti password.</p>
+
+          <div class="mb-4">
+            <label class="form-label-custom">Foto Profil</label>
+            <div>
+              <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" style="width:96px;height:96px;border-radius:50%;object-fit:cover;">
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-custom">Nama Lengkap</label>
+              <input type="text" value="{{ $user->name }}" class="form-control-custom" readonly disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Email</label>
+              <input type="text" value="{{ $user->email }}" class="form-control-custom" readonly disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">No. HP</label>
+              <input type="text" value="{{ $user->no_hp ?: '-' }}" class="form-control-custom" readonly disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-custom">Tanggal Lahir</label>
+              <input type="text" value="{{ $user->tanggal_lahir ? $user->tanggal_lahir->translatedFormat('d F Y') : '-' }}" class="form-control-custom" readonly disabled>
+            </div>
+            <div class="col-12">
+              <label class="form-label-custom">Jenis Kelamin</label>
+              <input type="text" value="{{ $user->jenis_kelamin_label }}" class="form-control-custom" readonly disabled>
+            </div>
+            <div class="col-12">
+              <label class="form-label-custom">Alamat</label>
+              <textarea rows="3" class="form-control-custom" readonly disabled>{{ $user->alamat ?: '-' }}</textarea>
+            </div>
+          </div>
+        </div>
+        @endif
       </div>
     </div>
 
@@ -196,7 +238,7 @@
               <label class="form-label-custom">Password Baru</label>
               <input type="password" name="password" autocomplete="new-password"
                 class="form-control-custom {{ $errors->updatePassword->has('password') ? 'is-invalid-custom' : '' }}"
-                placeholder="Minimal 8 karakter">
+                placeholder="Minimal 6 karakter, harus ada angka atau simbol">
               @error('password', 'updatePassword')
                 <span class="form-feedback-custom invalid-custom">{{ $message }}</span>
               @enderror
@@ -280,6 +322,36 @@
 @endsection
 
 @push('scripts')
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var form = document.querySelector('form[action="{{ route('profile.update') }}"]');
+      var bar = document.getElementById('profil-savebar');
+      if (!form || !bar) return;
+      var btn = document.getElementById('profil-savebar-btn');
+      var txt = document.getElementById('profil-savebar-text');
+      function snapshot() {
+        var out = [];
+        form.querySelectorAll('input, select, textarea').forEach(function (el) {
+          if (!el.name || el.name === '_token' || el.name === '_method') return;
+          if (el.type === 'file') { out.push(el.name + ':' + (el.files && el.files.length)); return; }
+          if (el.type === 'checkbox' || el.type === 'radio') { out.push(el.name + ':' + el.value + ':' + el.checked); return; }
+          out.push(el.name + ':' + el.value);
+        });
+        return out.join('|');
+      }
+      var awal = snapshot();
+      function cek() {
+        var berubah = snapshot() !== awal;
+        btn.disabled = !berubah;
+        bar.classList.toggle('is-dirty', berubah);
+        txt.textContent = berubah ? 'Ada perubahan yang belum disimpan.' : 'Belum ada perubahan.';
+      }
+      form.addEventListener('input', cek);
+      form.addEventListener('change', cek);
+      // foto bisa berubah lewat tombol hapus/ganti (hidden input diubah lewat JS)
+      form.addEventListener('click', function () { setTimeout(cek, 0); });
+    });
+  </script>
   @if ($errors->userDeletion->any())
     <script>
       document.addEventListener('DOMContentLoaded', function () {

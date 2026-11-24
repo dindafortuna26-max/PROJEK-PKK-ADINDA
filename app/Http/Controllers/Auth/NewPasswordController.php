@@ -34,7 +34,9 @@ class NewPasswordController extends Controller
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => ['required', 'confirmed', Rules\Password::defaults(), 'regex:/[\d\p{P}\p{S}]/u'],
+        ], [
+            'password.regex' => 'Password tidak boleh huruf semua, harus ada angka atau simbol.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

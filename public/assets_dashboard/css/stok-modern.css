@@ -157,3 +157,150 @@
   .sm-head, .sm-card { margin-left: .75rem; margin-right: .75rem; }
   .sm-head { padding-left: .25rem; padding-right: .25rem; }
 }
+
+/* ==========================================================
+   PERCANTIK TAMPILAN (v2) - khusus halaman Manajemen Stok
+   Semua aturan di bawah dikunci ke .stok-page, jadi tidak
+   mengubah halaman admin lain. Hanya tampilan, tanpa logika.
+   ========================================================== */
+
+/* ---------- Banner atas ---------- */
+.stok-page .ap-hero { margin-bottom: 1.25rem; padding: 1.6rem 1.9rem; }
+.stok-page .ap-hero h1 { letter-spacing: -.025em; }
+.stok-page .ap-hero p { line-height: 1.55; max-width: 62ch; }
+
+/* ---------- Pembungkus utama ---------- */
+.stok-page .table-card-custom { padding: 0; overflow: hidden; border-radius: 26px !important; }
+
+/* ---------- Baris tab + pencarian ---------- */
+.stok-page .table-header-control {
+  padding: 1rem 1.25rem; margin: 0; row-gap: .75rem;
+  background: linear-gradient(180deg, #FFFCFA, #FFF8F4);
+  border-bottom: 1px solid var(--sm-line);
+}
+.stok-page .table-header-control > form { justify-content: flex-end; align-items: center; gap: .6rem !important; }
+.stok-page .btn-group .btn-custom { font-weight: 700; padding: .55rem 1.1rem; white-space: nowrap; }
+.stok-page .btn-group .btn-custom i { font-size: .95rem; }
+.stok-page .btn-group .btn-custom-primary { color: var(--sm-red); }
+.stok-page .table-search-box { flex: 1 1 240px; max-width: 360px; min-width: 200px; }
+.stok-page .table-search-box:focus-within { box-shadow: 0 0 0 4px rgba(140,31,31,.1); }
+.stok-page .form-select-custom { min-height: 42px; }
+
+/* ---------- Kartu ringkasan (4 kartu) ---------- */
+.stok-page .row.g-3.mb-4 { margin-bottom: .5rem !important; padding: 1.25rem 1.25rem .25rem !important; }
+.stok-page .card-stat {
+  background: #fff !important; color: var(--sm-ink) !important;
+  padding: 1.1rem 1.2rem !important; border-radius: 20px !important;
+  border: 1px solid var(--sm-line) !important;
+  box-shadow: 0 1px 2px rgba(60,12,12,.04), 0 6px 18px rgba(60,12,12,.05) !important;
+}
+.stok-page .card-stat:hover { transform: translateY(-3px); box-shadow: 0 2px 4px rgba(60,12,12,.05), 0 14px 28px rgba(60,12,12,.1) !important; }
+.stok-page .card-stat .stat-icon-row { display: flex; align-items: center; gap: .7rem; margin-bottom: .7rem; }
+.stok-page .card-stat .stat-label,
+.stok-page .card-stat:first-child .stat-label { color: var(--sm-muted) !important; font-size: .72rem; letter-spacing: .06em; }
+.stok-page .card-stat .stat-value,
+.stok-page .card-stat:first-child .stat-value { color: var(--sm-ink) !important; font-size: 2rem; line-height: 1.05; }
+.stok-page .card-stat .stat-note { margin: .2rem 0 0; font-size: .78rem; color: var(--sm-muted); }
+.stok-page .card-stat::before { height: 4px !important; background: var(--sm-accent, var(--sm-red)) !important; opacity: .9; }
+.stok-page .card-stat::after { background: radial-gradient(circle, var(--sm-accent-bg, #FBE3D8), transparent 70%) !important; opacity: .8; }
+.stok-page .card-stat .stat-icon-badge {
+  width: 40px; height: 40px; display: grid; place-items: center; font-size: 1.1rem; flex-shrink: 0;
+  background: var(--sm-accent-bg, #FBE3D8) !important; color: var(--sm-accent, var(--sm-red)) !important;
+  box-shadow: none !important;
+}
+/* warna tiap kartu: total = merah, aman = hijau, menipis = kuning, habis = merah */
+.stok-page .row.g-3 > [class*="col"]:nth-child(1) .card-stat { --sm-accent: var(--sm-red);  --sm-accent-bg: #FBE3D8; }
+.stok-page .row.g-3 > [class*="col"]:nth-child(2) .card-stat { --sm-accent: var(--sm-ok);   --sm-accent-bg: var(--sm-ok-bg); }
+.stok-page .row.g-3 > [class*="col"]:nth-child(3) .card-stat { --sm-accent: var(--sm-warn); --sm-accent-bg: var(--sm-warn-bg); }
+.stok-page .row.g-3 > [class*="col"]:nth-child(4) .card-stat { --sm-accent: var(--sm-bad);  --sm-accent-bg: var(--sm-bad-bg); }
+
+/* ---------- Judul bagian ---------- */
+.stok-page .sm-head { padding: 1.3rem 1.25rem .85rem; }
+.stok-page .sm-head-sub { margin-top: 1rem; padding-top: 1.5rem; border-top: 1px dashed var(--sm-line); margin-left: 1.25rem; margin-right: 1.25rem; padding-left: 0; padding-right: 0; }
+.stok-page .sm-head-title h3 { font-size: 1.08rem; letter-spacing: -.015em; }
+.stok-page .sm-head-ico { width: 44px; height: 44px; border-radius: 14px; font-size: 1.2rem; }
+.stok-page .sm-head .btn-custom { border-radius: 999px; font-weight: 700; padding: .6rem 1.2rem; }
+
+/* ---------- Kartu & tabel ---------- */
+.stok-page .sm-card { border-radius: 22px; margin-bottom: 1.5rem; }
+.stok-page .sm-table thead th { padding: .95rem 1rem; background: #FFF6F1; font-size: .7rem; }
+.stok-page .sm-table tbody td { padding: .95rem 1rem; }
+.stok-page .sm-table tbody tr:nth-child(even):not(.sm-row-auto) { background: #FFFDFC; }
+.stok-page .sm-table tbody tr:hover,
+.stok-page .sm-table tbody tr:hover td { background: #FFF8F4; }
+.stok-page .sm-table tbody tr > td:first-child,
+.stok-page .sm-table thead tr > th:first-child { padding-left: 1.25rem; }
+.stok-page .sm-table tbody tr > td:last-child,
+.stok-page .sm-table thead tr > th:last-child { padding-right: 1.25rem; }
+.stok-page .sm-col-no { width: 56px; text-align: center; }
+.stok-page .sm-item b { font-size: .92rem; color: var(--sm-ink); }
+.stok-page .sm-item span { font-size: .76rem; }
+.stok-page .sm-stock-num { font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.stok-page .sm-meter { height: 9px; background: #F3E7E2; box-shadow: inset 0 1px 2px rgba(60,12,12,.06); }
+.stok-page .sm-meter > i { background-image: linear-gradient(90deg, rgba(255,255,255,.28), rgba(255,255,255,0)); background-color: var(--sm-ok); }
+.stok-page .sm-meter.warn > i { background-color: #E0A100; }
+.stok-page .sm-meter.bad > i { background-color: var(--sm-bad); }
+.stok-page .sm-meter.neutral > i { background-color: #CFC4C1; }
+.stok-page .sm-pill { padding: .3rem .8rem; }
+.stok-page .sm-pill.ok { box-shadow: inset 0 0 0 1px rgba(30,142,90,.18); }
+.stok-page .sm-pill.warn { box-shadow: inset 0 0 0 1px rgba(183,121,31,.22); }
+.stok-page .sm-pill.bad { box-shadow: inset 0 0 0 1px rgba(180,35,35,.2); }
+.stok-page .sm-user { padding: .2rem .65rem .2rem .25rem; background: #FFF8F4; border: 1px solid var(--sm-line); border-radius: 999px; font-weight: 600; }
+.stok-page .sm-av { background: linear-gradient(135deg, #B23A3A, #8C1F1F); color: #fff; }
+.stok-page .sm-flow-ico { border-radius: 11px; }
+.stok-page .sm-note { line-height: 1.45; }
+.stok-page .sm-tag { border-radius: 999px; padding: .15rem .6rem; }
+
+/* ---------- Tombol aksi (edit / hapus) ---------- */
+.stok-page .sm-icon-btn { width: 36px; height: 36px; border-radius: 12px; }
+.stok-page .sm-icon-btn:not(.danger):hover { background: var(--sm-red); border-color: var(--sm-red); color: #fff; }
+.stok-page .sm-icon-btn.danger:hover { background: var(--sm-bad); border-color: var(--sm-bad); color: #fff; }
+
+/* ---------- Filter segmen ---------- */
+.stok-page .sm-seg { background: #F6E9E3; box-shadow: inset 0 0 0 1px rgba(140,31,31,.06); }
+.stok-page .sm-seg a { padding: .45rem 1.05rem; }
+
+/* ---------- Footer & pagination ---------- */
+.stok-page .sm-foot { padding: .85rem 1.25rem; }
+.stok-page .sm-foot .pagination { gap: .25rem; flex-wrap: wrap; }
+.stok-page .sm-foot .page-link {
+  border: 1px solid var(--sm-line); border-radius: 10px !important; color: var(--sm-red);
+  min-width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 .55rem; font-size: .8rem; font-weight: 700; background: #fff;
+}
+.stok-page .sm-foot .page-link:hover { background: var(--sm-soft); border-color: var(--sm-red); }
+.stok-page .sm-foot .page-item.active .page-link { background: var(--sm-red); border-color: var(--sm-red); color: #fff; }
+.stok-page .sm-foot .page-item.disabled .page-link { color: #C9B8B4; background: #FBF7F5; }
+
+/* ---------- Baris kosong ---------- */
+.stok-page .sm-empty { padding: 3rem 1rem !important; font-size: .9rem; }
+.stok-page .sm-empty i { font-size: 2.2rem; color: #D9B9AE; opacity: 1; }
+
+/* ---------- Kotak info bahan operasional ---------- */
+.stok-page .bo-info { margin: .75rem 1.25rem 0; border-radius: 18px; }
+
+/* ---------- Modal (form tambah / edit stok) ---------- */
+.stok-page .modal-content { border-radius: 24px; overflow: hidden; border: 0; box-shadow: 0 24px 60px rgba(60,12,12,.28); }
+.stok-page .modal-body { padding: 1.4rem 1.5rem; }
+.stok-page .modal-footer { padding: 1rem 1.5rem 1.3rem; gap: .5rem; }
+
+/* ---------- Responsif ---------- */
+.stok-page .table-responsive { -webkit-overflow-scrolling: touch; }
+.stok-page .sm-table { min-width: 760px; }
+@media (max-width: 991.98px) {
+  .stok-page .table-header-control > form { width: 100%; justify-content: stretch; }
+  .stok-page .table-search-box { max-width: none; flex: 1 1 100%; }
+}
+@media (max-width: 767.98px) {
+  .stok-page .ap-hero { padding: 1.25rem; border-radius: 22px !important; }
+  .stok-page .table-header-control { padding: .85rem; }
+  .stok-page .btn-group { width: 100%; }
+  .stok-page .btn-group .btn-custom { flex: 1 1 auto; justify-content: center; padding: .55rem .7rem; font-size: .82rem; }
+  .stok-page .row.g-3.mb-4 { padding: .85rem .85rem 0 !important; }
+  .stok-page .card-stat .stat-value { font-size: 1.65rem; }
+  .stok-page .sm-head-sub { margin-left: .75rem; margin-right: .75rem; }
+  .stok-page .sm-head .btn-custom, .stok-page .sm-head .d-flex { width: 100%; }
+  .stok-page .sm-head .btn-custom { justify-content: center; }
+  .stok-page .sm-foot { justify-content: center; text-align: center; }
+  .stok-page .bo-info { margin-left: .75rem; margin-right: .75rem; }
+}

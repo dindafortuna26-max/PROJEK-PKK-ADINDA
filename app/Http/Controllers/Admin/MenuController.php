@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Kategori;
 use App\Models\Menu;
+use App\Models\TransaksiDetail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Support\FotoUpload;
 use Illuminate\View\View;
 
@@ -124,6 +126,35 @@ class MenuController extends Controller
             : "Menu \"{$menu->nama}\" dinonaktifkan.";
 
         return back()->with('success', $pesan);
+    }
+
+    /**
+     * DELETE /admin/menu/{menu}
+     * Hapus permanen. Menu yang sudah punya riwayat stok / transaksi TIDAK
+     * boleh dihapus (riwayat stok ikut hilang & laporan jadi tidak utuh),
+     * jadi cukup "Nonaktifkan" saja — sama pola dengan Topping & Kasir.
+     */
+    public function destroy(Menu $menu): RedirectResponse
+    {
+        $punyaRiwayat = $menu->pergerakanStok()->exists()
+            || TransaksiDetail::where('menu_id', $menu->id)->exists();
+
+        if ($punyaRiwayat) {
+            return back()->with('error', "Menu \"{$menu->nama}\" tidak bisa dihapus karena sudah punya riwayat stok/transaksi. Nonaktifkan saja.");
+        }
+
+        $nama = $menu->nama;
+        $gambarLama = $menu->gambar;
+
+        DB::transaction(function () use ($menu) {
+            // Bersihkan harga per ukuran dulu, baru menunya.
+            $menu->menuUkurans()->delete();
+            $menu->delete();
+        });
+
+        FotoUpload::hapus($gambarLama);
+
+        return back()->with('success', "Menu \"{$nama}\" berhasil dihapus.");
     }
 
     /**

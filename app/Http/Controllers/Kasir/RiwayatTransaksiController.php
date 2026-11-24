@@ -35,7 +35,7 @@ class RiwayatTransaksiController extends Controller
             ->withQueryString();
 
         // Ringkasan buat bantu cross-check closing kasir: jumlah transaksi
-        // selesai, total omzet, dan pecahan Cash vs Non-Tunai (QRIS+PayLater)
+        // selesai, total omzet, dan pecahan Cash vs Non-Tunai (QRIS)
         // — cash yang perlu dicocokkan fisik ke laci kasir, non-tunai tidak.
         $ringkasanQuery = fn () => $this->baseQuery($request, $tanggal, $tampilkanSemua)->selesai();
 
@@ -43,7 +43,7 @@ class RiwayatTransaksiController extends Controller
             'jumlah_transaksi' => $ringkasanQuery()->count(),
             'total_omzet' => (int) $ringkasanQuery()->sum('total'),
             'total_cash' => (int) $ringkasanQuery()->where('metode_bayar', 'cash')->sum('total'),
-            'total_non_tunai' => (int) $ringkasanQuery()->whereIn('metode_bayar', ['qris', 'paylater'])->sum('total'),
+            'total_non_tunai' => (int) $ringkasanQuery()->where('metode_bayar', 'qris')->sum('total'),
         ];
 
         return view('kasir.riwayat-transaksi.index', [
@@ -62,7 +62,7 @@ class RiwayatTransaksiController extends Controller
      */
     public function show(Transaksi $transaksi): View
     {
-        abort_if($transaksi->user_id !== Auth::id(), 403, 'Transaksi ini bukan milikmu.');
+        abort_if((int) $transaksi->user_id !== (int) Auth::id(), 403, 'Transaksi ini bukan milikmu.');
 
         $transaksi->load(['detail.opsi']);
 

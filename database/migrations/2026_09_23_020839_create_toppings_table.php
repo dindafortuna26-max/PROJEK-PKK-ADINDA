@@ -4,13 +4,9 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+return new class extends Migration 
 {
-    /**
-     * Saus dan bubuk tabur digabung satu tabel, dibedakan kolom
-     * "jenis". Di UI Admin ditampilkan sebagai 2 menu sidebar
-     * terpisah (Saus / Bubuk Tabur), tinggal difilter jenisnya.
-     */
+    
     public function up(): void
     {
         Schema::create('toppings', function (Blueprint $table) {

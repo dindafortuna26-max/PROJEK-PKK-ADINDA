@@ -270,6 +270,19 @@ body {
 }
 
 /* Password Toggle */
+/* Sembunyikan ikon "lihat password" bawaan browser (Edge/Chrome) biar tinggal 1 ikon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none !important;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-contacts-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+}
+
 .password-wrapper input {
     padding-right: 60px;
 }

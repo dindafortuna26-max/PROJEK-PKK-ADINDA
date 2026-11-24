@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureUserIsAdmin
 {
     /**
+     * untuk cek role admin
      * Blokir akses kalau user yang login bukan admin.
      * Kasir yang coba akses URL admin secara langsung akan
      * di-redirect balik ke dashboard-nya sendiri (403 kalau mau lebih tegas).

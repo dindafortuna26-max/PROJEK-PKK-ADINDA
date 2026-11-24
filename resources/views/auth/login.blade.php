@@ -9,8 +9,8 @@
         content="Interactive login form with floating shapes, sparkle focus effects and confetti success.">
     <meta name="author" content="Aigars Silkalns / Colorlib">
     <link rel="canonical" href="https://preview.colorlib.com/theme/login-forms/forms/creative/">
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%236366f1'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='white' font-family='system-ui,sans-serif'>L</text></svg>">
+    <link rel="icon" type="image/png" href="{{ asset('assets_dashboard/images/logo-cimol-bulat.png') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('assets_dashboard/images/logo-cimol-bulat.png') }}?v=2">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Creative Portal Login Form">
     <meta property="og:description"
@@ -128,27 +128,6 @@
                     </span>
                 </button>
             </form>
-
-            <div class="divider">
-                <div class="divider-line"></div>
-                <span>or explore with</span>
-                <div class="divider-line"></div>
-            </div>
-
-            <div class="creative-social">
-                <button type="button" class="social-btn behance-btn">
-                    <div class="social-icon behance-icon"></div>
-                    <span>Behance</span>
-                </button>
-                <button type="button" class="social-btn dribbble-btn">
-                    <div class="social-icon dribbble-icon"></div>
-                    <span>Dribbble</span>
-                </button>
-            </div>
-
-            <div class="signup-link">
-                <p>New to creativity? <a href="#">Start your journey</a></p>
-            </div>
 
             <div class="success-message" id="successMessage">
                 <div class="success-animation">

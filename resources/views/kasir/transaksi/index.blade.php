@@ -3,7 +3,7 @@
 @section('title', 'Transaksi - ' . config('app.name', 'Cimol Bojot AA'))
 
 @push('styles')
-  <link rel="stylesheet" href="{{ asset('assets_dashboard/css/kasir-modern.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets_dashboard/css/kasir-modern.css') }}?v={{ @filemtime(public_path('assets_dashboard/css/kasir-modern.css')) }}">
   <link rel="stylesheet" href="{{ asset('assets_dashboard/css/cimol-plus.css') }}">
   <link rel="stylesheet" href="{{ asset('assets_dashboard/css/kasir-polish.css') }}?v={{ @filemtime(public_path('assets_dashboard/css/kasir-polish.css')) }}">
   <link rel="stylesheet" href="{{ asset('assets_dashboard/css/kasir-level.css') }}?v={{ @filemtime(public_path('assets_dashboard/css/kasir-level.css')) }}">
@@ -20,6 +20,19 @@
     .km .cash-kembalian span:first-child { font-size: .85rem; font-weight: 700; color: var(--km-muted); }
     .km .cash-kembalian span:last-child { font-size: 1.25rem; font-weight: 800; color: var(--km-ok); }
     .km .cash-kembalian.kurang span:last-child { color: var(--km-bad); font-size: 1rem; }
+
+    /* Kotak "Harga per porsi" di popup menu: kasih ruang napas biar tidak mepet */
+    .pos-modal .pos-modal-harga { padding: .9rem 1.15rem !important; display: flex; flex-direction: column; gap: .3rem; }
+    .pos-modal .pos-modal-harga small { display: block; line-height: 1.3; margin: 0; }
+    .pos-modal .pos-modal-harga span { display: block; line-height: 1.2; }
+
+    /* Tombol "Tambah" di popup menu dibuat ringkas (tidak memanjang penuh) */
+    .pos-modal .pos-modal-foot { display: flex; align-items: center; gap: .9rem; }
+    .pos-modal .pos-modal-foot .pos-foot-total { margin-left: auto; font-weight: 800; font-size: 1.05rem; white-space: nowrap; }
+    .pos-modal .pos-modal-foot .pos-add-btn {
+      flex: 0 0 auto; width: auto; min-width: 0; max-width: 160px;
+      padding: .6rem 1.3rem; gap: .45rem; justify-content: center; white-space: nowrap;
+    }
   </style>
 @endpush
 
@@ -77,7 +90,7 @@
 
         <div class="row g-3" id="grid-menu">
           @forelse ($menus as $menu)
-            @php $statusStok = $menu->status_stok; @endphp
+            @php $statusStok = $menu->statusStokUntukKasir((int) auth()->id()); @endphp
             <div class="col-6 col-md-4 col-xl-3 menu-card-col"
               data-kategori-id="{{ $menu->kategori_id }}"
               data-nama="{{ \Illuminate\Support\Str::lower($menu->nama) }}">
@@ -124,7 +137,7 @@
       <div class="km-card pos-cart" id="pos-cart">
         <div class="pos-cart-head">
           <h2 class="km-card-title">
-            <i class="bi bi-bag-check-fill"></i> Keranjang
+            <i class="bi bi-bag-check-fill"></i> Pesanan
             <span class="pos-cart-count" id="cart-count">0</span>
           </h2>
           <button type="button" class="pos-cart-clear d-none" id="btn-kosongkan" onclick="kosongkanKeranjang()">
@@ -135,7 +148,7 @@
         <div class="pos-cart-body">
           <div id="cart-empty-msg" class="pos-cart-empty">
             <i class="bi bi-cart3"></i>
-            Keranjang masih kosong.<br>Klik menu di sebelah kiri untuk menambahkan.
+            Pesanan masih kosong.<br>Klik menu di sebelah kiri untuk menambahkan.
           </div>
           <div id="cart-list"></div>
         </div>
@@ -157,11 +170,6 @@
               <span class="pay-tick"><i class="bi bi-check-lg"></i></span>
               <img class="pay-logo" src="{{ asset('assets_dashboard/images/pay/qris.svg') }}" alt="">
               <span>QRIS</span>
-            </button>
-            <button type="button" class="pos-pay metode-bayar-btn" data-metode="paylater" onclick="pilihMetodeBayar(this, 'paylater')">
-              <span class="pay-tick"><i class="bi bi-check-lg"></i></span>
-              <img class="pay-logo" src="{{ asset('assets_dashboard/images/pay/paylater.svg') }}" alt="">
-              <span>PayLater</span>
             </button>
           </div>
 
@@ -185,8 +193,8 @@
             <input type="hidden" name="uang_diterima" id="input-uang-diterima" value="">
             <div id="hidden-items-container"></div>
             <button type="submit" class="km-btn km-btn-block" id="btn-checkout" disabled>
-              <i class="bi bi-check-circle-fill"></i>
-              <span>Selesaikan Transaksi</span>
+              <i class="bi bi-printer-fill"></i>
+              <span>Cetak Struk</span>
             </button>
           </form>
         </div>
@@ -195,14 +203,14 @@
 
   </div>
 
-  <!-- Bar ringkas keranjang khusus layar HP -->
+  <!-- Bar ringkas pesanan khusus layar HP -->
   <div class="pos-mobile-bar" id="pos-mobile-bar">
     <div>
       <b id="mobile-total">Rp 0</b>
       <small id="mobile-jumlah">0 item</small>
     </div>
     <button type="button" onclick="document.getElementById('pos-cart').scrollIntoView({ behavior: 'smooth', block: 'start' })">
-      Lihat Keranjang <i class="bi bi-arrow-down-short"></i>
+      Lihat Pesanan <i class="bi bi-arrow-down-short"></i>
     </button>
   </div>
 
@@ -271,10 +279,10 @@
             <span id="modal-jumlah">1</span>
             <button type="button" onclick="ubahJumlahModal(1)" aria-label="Tambah"><i class="bi bi-plus-lg"></i></button>
           </div>
+          <span class="pos-foot-total" id="modal-item-harga-preview">Rp 0</span>
           <button type="button" class="pos-add-btn" id="btn-tambah-keranjang" onclick="tambahKeKeranjang()">
             <i class="bi bi-bag-plus-fill"></i>
-            <span>Tambah ke Keranjang</span>
-            <span class="harga" id="modal-item-harga-preview">Rp 0</span>
+            <span>Tambah</span>
           </button>
         </div>
       </div>
@@ -387,8 +395,15 @@
         return;
       }
 
+      // Ukuran yang kemasannya habis tidak bisa dipilih. Kalau semuanya habis, stop.
+      const ukuranTersedia = menu.ukurans.find((u) => !u.kemasan_habis);
+      if (!ukuranTersedia) {
+        tampilToast('Kemasan untuk semua ukuran "' + menu.nama + '" habis. Hubungi Admin untuk menambah stok kemasan.', 'warn');
+        return;
+      }
+
       modalMenu = menu;
-      modalUkuranId = menu.ukurans[0].id;
+      modalUkuranId = ukuranTersedia.id;
       modalSausIds = [];
       modalLevel = 'tidak_pedas';
       modalBubukIds = [];
@@ -438,17 +453,38 @@
       return card;
     }
 
+    // Tombol ukuran: foto kemasan di atas (ikon kotak kalau belum ada foto),
+    // lalu teks ukuran (Kecil / Sedang / Besar) dan harga tetap tampil.
     function renderUkuranPills() {
       const wrap = document.getElementById('modal-ukuran-list');
       wrap.innerHTML = '';
       modalMenu.ukurans.forEach((ukuran) => {
+        const habis = !!ukuran.kemasan_habis;
         const tombol = document.createElement('button');
         tombol.type = 'button';
-        tombol.className = 'opt-size' + (ukuran.id === modalUkuranId ? ' selected' : '');
-        tombol.innerHTML = '<b></b><span></span>';
-        tombol.querySelector('b').textContent = ukuran.nama;
-        tombol.querySelector('span').textContent = formatRupiah(ukuran.harga);
-        tombol.onclick = () => { modalUkuranId = ukuran.id; renderUkuranPills(); updateHargaPreview(); };
+        tombol.disabled = habis;
+        tombol.className = 'opt-size' + (ukuran.id === modalUkuranId ? ' selected' : '') + (habis ? ' habis' : '');
+        tombol.title = ukuran.kemasan_nama ? 'Kemasan: ' + ukuran.kemasan_nama : '';
+        tombol.innerHTML =
+          '<span class="opt-size-foto"><i class="bi bi-box-seam"></i></span>' +
+          '<b class="opt-size-nama"></b>' +
+          '<span class="opt-size-harga"></span>' +
+          (habis ? '<span class="opt-size-habis">Kemasan habis</span>' : '');
+        tombol.querySelector('.opt-size-nama').textContent = ukuran.nama;
+        tombol.querySelector('.opt-size-harga').textContent = formatRupiah(ukuran.harga);
+
+        if (ukuran.kemasan_foto) {
+          const img = document.createElement('img');
+          img.alt = ukuran.kemasan_nama || ('Kemasan ' + ukuran.nama);
+          img.loading = 'lazy';
+          img.onerror = () => img.remove();
+          img.src = ukuran.kemasan_foto;
+          tombol.querySelector('.opt-size-foto').appendChild(img);
+        }
+
+        if (!habis) {
+          tombol.onclick = () => { modalUkuranId = ukuran.id; renderUkuranPills(); updateHargaPreview(); };
+        }
         wrap.appendChild(tombol);
       });
     }
@@ -601,7 +637,7 @@
       const hargaSatuan = hitungHargaSatuanModal();
 
       // Kalau kombinasi menu+ukuran+bumbu+topping persis sama sudah ada
-      // di keranjang, tambahkan jumlahnya saja daripada bikin baris baru.
+      // di pesanan, tambahkan jumlahnya saja daripada bikin baris baru.
       const kunciKombinasi = JSON.stringify({
         menuId: modalMenu.id, ukuranId: modalUkuranId, sausIds: [...modalSausIds].sort(),
         levelPedas: modalLevel,
@@ -634,12 +670,12 @@
       modalBolehTutup = true;
       bootstrap.Modal.getInstance(document.getElementById('modal-item-menu'))?.hide();
       renderCart();
-      tampilToast(modalJumlah + 'x ' + modalMenu.nama + ' masuk keranjang');
+      tampilToast(modalJumlah + 'x ' + modalMenu.nama + ' masuk ke pesanan');
     }
 
     // ===================== KERANJANG =====================
     // Batal beli: menutup popup pilih menu (X / Esc / klik luar) tanpa menekan
-    // "Tambah ke keranjang" dianggap membatalkan pembelian menu itu -> tanya dulu.
+    // "Tambah ke pesanan" dianggap membatalkan pembelian menu itu -> tanya dulu.
     let modalBolehTutup = false;
     (function () {
       const elModal = document.getElementById('modal-item-menu');
@@ -652,7 +688,7 @@
         konfirmasiAksi({
           ikon: 'bi-bag-x',
           judul: 'Batal beli menu ini?',
-          pesan: 'Pilihan untuk ' + namaMenu + ' belum masuk keranjang dan akan dibatalkan.',
+          pesan: 'Pilihan untuk ' + namaMenu + ' belum masuk ke pesanan dan akan dibatalkan.',
           tombolYa: 'Ya, batal beli',
           tombolTidak: 'Tidak, lanjut pilih',
           pesanTidak: 'Tidak jadi, silakan lanjut memilih',
@@ -665,7 +701,7 @@
       });
     })();
 
-    // Dialog konfirmasi Ya / Tidak (dipakai untuk kosongkan keranjang & batalkan menu)
+    // Dialog konfirmasi Ya / Tidak (dipakai untuk kosongkan pesanan & batalkan menu)
     let kcOnYa = null;
     let kcPesanTidak = '';
     function konfirmasiAksi(opsi) {
@@ -721,16 +757,16 @@
       konfirmasiAksi({
         ikon: 'bi-x-circle',
         judul: 'Batalkan menu ini?',
-        pesan: item.nama + ' (' + item.namaUkuran + ') x' + item.jumlah + ' akan dihapus dari keranjang.',
+        pesan: item.nama + ' (' + item.namaUkuran + ') x' + item.jumlah + ' akan dihapus dari pesanan.',
         tombolYa: 'Ya, batalkan',
         tombolTidak: 'Tidak',
-        pesanTidak: 'Tidak jadi, menu tetap ada di keranjang',
+        pesanTidak: 'Tidak jadi, menu tetap ada di pesanan',
         onYa: function () {
           const posisi = cart.indexOf(item);
           if (posisi === -1) return;
           cart.splice(posisi, 1);
           renderCart();
-          tampilToast(item.nama + ' sudah dibatalkan dari keranjang', 'ok', 'tengah');
+          tampilToast(item.nama + ' sudah dibatalkan dari pesanan', 'ok', 'tengah');
         },
       });
     }
@@ -739,15 +775,15 @@
       if (!cart.length) return;
       konfirmasiAksi({
         ikon: 'bi-trash3',
-        judul: 'Kosongkan keranjang?',
-        pesan: 'Semua ' + cart.length + ' menu di keranjang akan dihapus.',
+        judul: 'Kosongkan pesanan?',
+        pesan: 'Semua ' + cart.length + ' menu di pesanan akan dihapus.',
         tombolYa: 'Ya, kosongkan',
         tombolTidak: 'Tidak',
-        pesanTidak: 'Tidak jadi, keranjang tetap seperti semula',
+        pesanTidak: 'Tidak jadi, pesanan tetap seperti semula',
         onYa: function () {
           cart = [];
           renderCart();
-          tampilToast('Keranjang sudah dikosongkan', 'ok', 'tengah');
+          tampilToast('Pesanan sudah dikosongkan', 'ok', 'tengah');
         },
       });
     }
@@ -841,18 +877,65 @@
       });
     }
 
+    // Klik "Cetak Struk": simpan transaksi lewat fetch (halaman TIDAK pindah),
+    // lalu tampilkan dialog cetak/save dengan nama file "Struk TRX-xxxxx".
+    // Begitu dialog ditutup (setelah Save atau Batal) -> kembali ke halaman
+    // transaksi yang bersih, siap untuk pembeli berikutnya.
     function sebelumSubmitCheckout() {
       if (!cart.length) {
-        tampilToast('Keranjang masih kosong.', 'warn');
+        tampilToast('Pesanan masih kosong.', 'warn');
         return false;
       }
       if (metodeBayarTerpilih === 'cash' && uangDiterima < totalKeranjang) {
         tampilToast('Uang diterima kurang dari total belanja.', 'warn');
         return false;
       }
-      document.getElementById('btn-checkout').disabled = true;
-      document.getElementById('btn-checkout').innerHTML = '<i class="bi bi-hourglass-split"></i><span>Menyimpan...</span>';
-      return true;
+
+      const form = document.getElementById('form-checkout');
+      const tombol = document.getElementById('btn-checkout');
+      tombol.disabled = true;
+      tombol.innerHTML = '<i class="bi bi-hourglass-split"></i><span>Menyimpan...</span>';
+
+      const pulihkanTombol = function () {
+        tombol.innerHTML = '<i class="bi bi-printer-fill"></i><span>Cetak Struk</span>';
+        perbaruiPembayaran();
+      };
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: new FormData(form),
+        credentials: 'same-origin',
+      })
+        .then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok) {
+              let pesan = data.message || 'Transaksi gagal disimpan.';
+              if (res.status === 419) pesan = 'Sesi habis. Muat ulang halaman lalu coba lagi.';
+              if (data.errors) pesan = Object.values(data.errors).flat().join(' ');
+              throw new Error(pesan);
+            }
+            return data;
+          });
+        })
+        .then(cetakStrukLaluKembali)
+        .catch(function (err) {
+          tampilToast(err.message || 'Transaksi gagal disimpan.', 'warn');
+          pulihkanTombol();
+        });
+
+      return false;
+    }
+
+    function cetakStrukLaluKembali(data) {
+      // Buka halaman struk di tab yang sama. Halaman itu otomatis memunculkan
+      // dialog cetak (nama file = "Struk TRX-xxxxx" dari <title>), lalu kembali
+      // sendiri ke halaman transaksi setelah dialog ditutup. Cara ini jalan di
+      // semua browser/HP, tidak bergantung pada cetak lewat iframe tersembunyi
+      // (yang sering diblokir browser atau malah mencetak halaman yang salah).
+      // Kalau dialog cetak tidak muncul otomatis, tombol "Cetak Sekarang" &
+      // "Kembali" di atas struk tetap bisa dipakai manual.
+      window.location.href = data.struk_url_penuh;
     }
 
     // ===================== METODE BAYAR =====================
@@ -927,11 +1010,12 @@
       // Nominal dikirim ke server hanya kalau bayar tunai.
       document.getElementById('input-uang-diterima').value = tunai ? uangDiterima : '';
 
-      // Tombol checkout aktif kalau keranjang ada isi, dan (untuk cash)
+      // Tombol checkout aktif kalau pesanan ada isi, dan (untuk cash)
       // uang yang diterima sudah cukup.
       document.getElementById('btn-checkout').disabled = !adaItem || (tunai && uangDiterima < totalKeranjang);
     }
 
     renderCart();
+
   </script>
 @endpush

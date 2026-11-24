@@ -38,6 +38,14 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        // Kasir TIDAK boleh mengubah data diri (foto, nama, email, no. HP,
+        // alamat, dll). Data itu hanya bisa diubah Admin lewat menu Data Kasir.
+        // Kasir cuma boleh ganti password (route terpisah: password.update).
+        if ($user->role !== 'admin') {
+            return Redirect::route('profile.edit')
+                ->with('error', 'Data diri hanya bisa diubah oleh Admin. Kamu hanya bisa mengganti password.');
+        }
+
         $data = $request->safe()->only([
             'name', 'email', 'no_hp', 'jenis_kelamin', 'tanggal_lahir', 'alamat',
         ]);
@@ -97,7 +105,9 @@ class ProfileController extends Controller
         // langsung error 500. Arahkan ke Admin untuk menonaktifkan.
         $punyaRiwayat = Transaksi::where('user_id', $user->id)->exists()
             || PergerakanStok::where('user_id', $user->id)->exists()
-            || PergerakanStokTopping::where('user_id', $user->id)->exists();
+            || PergerakanStokTopping::where('user_id', $user->id)->exists()
+            || PergerakanStok::where('kasir_id', $user->id)->exists()
+            || PergerakanStokTopping::where('kasir_id', $user->id)->exists();
 
         if ($punyaRiwayat) {
             return Redirect::route('profile.edit')

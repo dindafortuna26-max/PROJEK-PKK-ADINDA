@@ -20,6 +20,9 @@
   @if (session('success'))
     <div class="alert alert-success mb-4" role="alert">{{ session('success') }}</div>
   @endif
+  @if (session('error'))
+    <div class="alert alert-danger mb-4" role="alert">{{ session('error') }}</div>
+  @endif
 
   <!-- ===================== RINGKASAN ===================== -->
   <div class="row g-3 mb-4">
@@ -123,6 +126,18 @@
             @method('PATCH')
             <button type="submit" class="act icon {{ $menu->is_active ? 'warn' : 'good' }}" title="{{ $menu->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
               <i class="bi {{ $menu->is_active ? 'bi-pause-circle-fill' : 'bi-play-circle-fill' }}"></i>
+            </button>
+          </form>
+
+          <form action="{{ route('admin.menu.destroy', $menu) }}" method="POST" class="m-0"
+            data-confirm="Hapus menu ini?"
+            data-confirm-text="{{ $menu->nama }} akan dihapus permanen beserta ukuran & harganya. Menu yang sudah punya riwayat stok/transaksi tidak bisa dihapus (nonaktifkan saja)."
+            data-confirm-yes="Ya, Hapus"
+            data-confirm-tone="danger">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="act icon danger" title="Hapus menu">
+              <i class="bi bi-trash-fill"></i>
             </button>
           </form>
         </div>
